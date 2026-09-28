@@ -164,7 +164,7 @@
         </div>
         <div class="flex items-center gap-2">
           <button id="btnWeight" class="h-8 px-3 rounded-full text-xs font-semibold border border-slate-200 dark:border-white/10 flex items-center gap-1.5">
-            <span class="h-2 w-2 rounded-full bg-violet-400"></span>体重
+            <span class="h-2 w-2 rounded-full bg-slate-400"></span>体重
           </button>
           <div class="flex p-0.5 rounded-full bg-slate-100 dark:bg-white/5 text-xs font-semibold" id="rangeTabs">
             <button data-range="7"   class="h-7 px-3 rounded-full">7日</button>
@@ -539,8 +539,8 @@
       b.className = 'h-7 px-3 rounded-full transition ' + (on ? 'bg-white dark:bg-white/15 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400');
     });
     const wb = $('btnWeight');
-    wb.classList.toggle('bg-violet-50', settings.showWeight);
-    wb.classList.toggle('dark:bg-violet-400/10', settings.showWeight);
+    wb.classList.toggle('bg-slate-100', settings.showWeight);
+    wb.classList.toggle('dark:bg-white/10', settings.showWeight);
     wb.classList.toggle('opacity-50', !settings.showWeight);
 
     const fats = data.filter((e) => e.fat != null).map((e) => e.fat);
@@ -588,7 +588,7 @@
     if (hasWeight) {
       datasets.push({
         label: '体重', unit: 'kg', data: data.map((e) => e.weight ?? null), yAxisID: 'y1', spanGaps: true,
-        borderColor: dark ? 'rgba(167,139,250,.55)' : 'rgba(139,92,246,.5)', backgroundColor: '#a78bfa',
+        borderColor: dark ? 'rgba(148,163,184,.6)' : 'rgba(100,116,139,.55)', backgroundColor: '#94a3b8',
         borderWidth: 1.5, tension: 0.4, cubicInterpolationMode: 'monotone', pointRadius: many ? 0 : 2, fill: false, order: 2,
       });
     }
@@ -621,7 +621,7 @@
         scales: {
           x: { grid: { display: false }, border: { display: false }, ticks: { color: tick, maxRotation: 0, autoSkip: true, maxTicksLimit: 7, font: { family: 'Inter', size: 11 } } },
           y: { display: hasFat, position: 'left', min: yMin, max: yMax, grid: { color: grid }, border: { display: false }, ticks: { color: tick, font: { family: 'Inter', size: 11 }, callback: (v) => v + '%' } },
-          y1: { display: hasWeight, position: 'right', grid: { display: !hasFat, color: grid }, border: { display: false }, ticks: { color: '#a78bfa', font: { family: 'Inter', size: 11 }, callback: (v) => v + 'kg' } },
+          y1: { display: hasWeight, position: 'right', grid: { display: !hasFat, color: grid }, border: { display: false }, ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 }, callback: (v) => v + 'kg' } },
         },
       },
     };
