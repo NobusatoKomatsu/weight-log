@@ -92,7 +92,7 @@
       <button id="hcConnect" class="h-9 px-4 shrink-0 rounded-xl bg-indigo-600 text-white text-xs font-semibold active:scale-95 transition">連携する</button>
     </section>
 
-    <!-- 進捗ヒーロー -->
+    <!-- 進捗ヒーロー (体脂肪率) -->
     <section class="pop rounded-3xl p-5 bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-xl shadow-indigo-600/20 relative overflow-hidden">
       <div class="absolute -right-10 -bottom-16 h-48 w-48 rounded-full bg-white/10"></div>
       <div class="flex items-center gap-5 relative">
@@ -110,38 +110,49 @@
           </div>
         </div>
         <div class="min-w-0">
-          <p class="text-sm text-white/75">現在の体重</p>
-          <p class="text-4xl font-extrabold tracking-tight num"><span id="heroWeight">--</span><span class="text-lg font-semibold text-white/80 ml-1">kg</span></p>
+          <p class="text-sm text-white/75">現在の体脂肪率</p>
+          <p class="text-4xl font-extrabold tracking-tight num"><span id="heroFat">--</span><span class="text-lg font-semibold text-white/80 ml-1">%</span></p>
           <p class="mt-1 text-sm text-white/85 flex items-center gap-1.5" id="heroDelta"></p>
           <p class="mt-1 text-xs text-white/70" id="heroEta"></p>
         </div>
       </div>
     </section>
 
-    <!-- 指標カード -->
+    <!-- 体脂肪率カード -->
     <section class="grid grid-cols-2 md:grid-cols-4 gap-3">
       <div class="pop rounded-2xl p-4 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm">
-        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">開始体重 <i data-lucide="flag" class="h-4 w-4"></i></div>
-        <p class="mt-2 text-2xl font-bold num"><span id="cardStart">--</span><span class="text-sm font-medium text-slate-400 ml-0.5">kg</span></p>
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">開始 <i data-lucide="flag" class="h-4 w-4"></i></div>
+        <p class="mt-2 text-2xl font-bold num"><span id="cardStart">--</span><span class="text-sm font-medium text-slate-400 ml-0.5">%</span></p>
         <p class="text-[11px] text-slate-400 mt-0.5" id="cardStartDate">&nbsp;</p>
       </div>
       <div class="pop rounded-2xl p-4 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm">
-        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">現在体重 <i data-lucide="scale" class="h-4 w-4"></i></div>
-        <p class="mt-2 text-2xl font-bold num"><span id="cardCurrent">--</span><span class="text-sm font-medium text-slate-400 ml-0.5">kg</span></p>
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">現在 <i data-lucide="percent" class="h-4 w-4"></i></div>
+        <p class="mt-2 text-2xl font-bold num"><span id="cardCurrent">--</span><span class="text-sm font-medium text-slate-400 ml-0.5">%</span></p>
         <p class="text-[11px] mt-0.5" id="cardCurrentSub">&nbsp;</p>
       </div>
       <div class="pop rounded-2xl p-4 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm">
-        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">目標体重 <i data-lucide="target" class="h-4 w-4"></i></div>
-        <p class="mt-2 text-2xl font-bold num"><span id="cardGoal">--</span><span class="text-sm font-medium text-slate-400 ml-0.5">kg</span></p>
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">目標 <i data-lucide="target" class="h-4 w-4"></i></div>
+        <p class="mt-2 text-2xl font-bold num"><span id="cardGoal">--</span><span class="text-sm font-medium text-slate-400 ml-0.5">%</span></p>
         <p class="text-[11px] text-slate-400 mt-0.5" id="cardGoalSub">&nbsp;</p>
       </div>
       <div class="pop rounded-2xl p-4 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm">
         <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">目標まで <i data-lucide="trending-down" class="h-4 w-4"></i></div>
-        <p class="mt-2 text-2xl font-bold num text-indigo-600 dark:text-indigo-400"><span id="cardRemain">--</span><span class="text-sm font-medium text-slate-400 ml-0.5">kg</span></p>
-        <div class="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
-          <div id="remainBar" class="h-full w-0 rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 transition-all duration-700"></div>
-        </div>
+        <p class="mt-2 text-2xl font-bold num text-indigo-600 dark:text-indigo-400"><span id="cardRemain">--</span><span class="text-sm font-medium text-slate-400 ml-0.5">%</span></p>
+        <p class="text-[11px] text-slate-400 mt-0.5" id="cardRemainSub">&nbsp;</p>
       </div>
+    </section>
+
+    <!-- 体重 (補助) -->
+    <section class="pop rounded-2xl p-4 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm !py-3 flex items-center gap-3">
+      <div class="h-9 w-9 shrink-0 rounded-xl bg-violet-100 dark:bg-violet-500/15 text-violet-600 dark:text-violet-300 grid place-items-center">
+        <i data-lucide="scale" class="h-4 w-4"></i>
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="text-xs text-slate-500 dark:text-slate-400">体重</p>
+        <p class="font-bold num leading-tight"><span id="wCurrent">--</span> <span class="text-xs font-medium text-slate-400">kg</span>
+          <span id="wDelta" class="ml-1.5 text-xs font-semibold"></span></p>
+      </div>
+      <p class="text-[11px] text-slate-400 text-right leading-snug num" id="wSub"></p>
     </section>
 
     <!-- グラフ -->
@@ -152,8 +163,8 @@
           <p class="text-xs text-slate-500 dark:text-slate-400" id="chartSummary">&nbsp;</p>
         </div>
         <div class="flex items-center gap-2">
-          <button id="btnFat" class="h-8 px-3 rounded-full text-xs font-semibold border border-slate-200 dark:border-white/10 flex items-center gap-1.5">
-            <span class="h-2 w-2 rounded-full bg-amber-400"></span>体脂肪率
+          <button id="btnWeight" class="h-8 px-3 rounded-full text-xs font-semibold border border-slate-200 dark:border-white/10 flex items-center gap-1.5">
+            <span class="h-2 w-2 rounded-full bg-violet-400"></span>体重
           </button>
           <div class="flex p-0.5 rounded-full bg-slate-100 dark:bg-white/5 text-xs font-semibold" id="rangeTabs">
             <button data-range="7"   class="h-7 px-3 rounded-full">7日</button>
@@ -245,13 +256,13 @@
         </label>
         <div class="grid grid-cols-2 gap-3">
           <label class="block">
-            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">体重 (kg)</span>
-            <input type="number" id="fWeight" inputmode="decimal" step="0.1" min="20" max="300" required placeholder="65.0"
-                   class="mt-1 w-full h-14 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-2xl font-bold num focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">体脂肪率 (%)</span>
+            <input type="number" id="fFat" inputmode="decimal" step="0.1" min="1" max="70" placeholder="20.0"
+                   class="mt-1 w-full h-14 px-4 rounded-xl bg-indigo-50/60 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-400/30 text-2xl font-bold num focus:outline-none focus:ring-2 focus:ring-indigo-500" />
           </label>
           <label class="block">
-            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">体脂肪率 (%)</span>
-            <input type="number" id="fFat" inputmode="decimal" step="0.1" min="1" max="70" placeholder="任意"
+            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">体重 (kg)</span>
+            <input type="number" id="fWeight" inputmode="decimal" step="0.1" min="20" max="300" placeholder="任意"
                    class="mt-1 w-full h-14 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-2xl font-bold num focus:outline-none focus:ring-2 focus:ring-indigo-500" />
           </label>
         </div>
@@ -277,30 +288,45 @@
         <h3 class="text-lg font-bold">設定</h3>
         <button type="button" data-close class="h-9 w-9 grid place-items-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5"><i data-lucide="x" class="h-5 w-5"></i></button>
       </div>
+      <p class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mb-2">体脂肪率</p>
       <div class="grid grid-cols-2 gap-3">
-        <label class="block col-span-2">
+        <label class="block">
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">目標 (%)</span>
+          <input type="number" id="sGoalFat" inputmode="decimal" step="0.1" min="3" max="60" placeholder="例: 15.0"
+                 class="mt-1 w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 num focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </label>
+        <label class="block">
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">開始 (%)</span>
+          <input type="number" id="sStartFat" inputmode="decimal" step="0.1" min="3" max="70" placeholder="自動"
+                 class="mt-1 w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 num focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </label>
+      </div>
+
+      <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-5 mb-2">体重・BMI（任意）</p>
+      <div class="grid grid-cols-3 gap-3">
+        <label class="block">
           <span class="text-xs font-medium text-slate-500 dark:text-slate-400">身長 (cm)</span>
           <input type="number" id="sHeight" inputmode="decimal" step="0.1" min="100" max="250" placeholder="170"
                  class="mt-1 w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 num focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </label>
         <label class="block">
-          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">目標体重 (kg)</span>
-          <input type="number" id="sGoal" inputmode="decimal" step="0.1" min="20" max="300" placeholder="60.0"
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">目標 (kg)</span>
+          <input type="number" id="sGoal" inputmode="decimal" step="0.1" min="20" max="300" placeholder="任意"
                  class="mt-1 w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 num focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </label>
         <label class="block">
-          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">開始体重 (kg)</span>
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">開始 (kg)</span>
           <input type="number" id="sStart" inputmode="decimal" step="0.1" min="20" max="300" placeholder="自動"
                  class="mt-1 w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 num focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </label>
       </div>
-      <p class="text-[11px] text-slate-400 mt-2">開始体重を空欄にすると、最初の記録が自動で使われます。</p>
+      <p class="text-[11px] text-slate-400 mt-2">「開始」を空欄にすると、最初の記録が自動で使われます。</p>
       <button type="submit" class="mt-4 w-full h-12 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold active:scale-[.98] transition">設定を保存</button>
 
       <div id="hcSettings" class="hidden mt-6 pt-5 border-t border-slate-100 dark:border-white/5">
         <h4 class="font-semibold text-sm mb-1 flex items-center gap-2"><i data-lucide="heart-pulse" class="h-4 w-4"></i>Health Connect</h4>
         <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
-          AiLink などが Health Connect に書き込んだ体重・体脂肪率を、アプリを開くたびに自動で取り込みます。同じ日に手入力した記録がある場合は手入力を優先します。
+          AiLink などが Health Connect に書き込んだ体重（体脂肪率があればそれも）を、アプリを開くたびに自動で取り込みます。同じ日に手入力した記録がある場合は手入力を優先します。
         </p>
         <p class="text-[11px] mb-3" id="hcStatus">未確認</p>
         <div class="grid grid-cols-2 gap-2">
@@ -358,7 +384,7 @@
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { toast('保存に失敗しました'); } };
 
   let entries = load(KEY_ENTRIES, []);
-  let settings = Object.assign({ height: null, goal: null, startWeight: null, theme: null, showFat: true, range: '30' }, load(KEY_SETTINGS, {}));
+  let settings = Object.assign({ height: null, goal: null, startWeight: null, goalFat: null, startFat: null, theme: null, showWeight: true, range: '30' }, load(KEY_SETTINGS, {}));
 
   const persist = () => { entries.sort((a, b) => a.date.localeCompare(b.date)); save(KEY_ENTRIES, entries); };
   const persistSettings = () => save(KEY_SETTINGS, settings);
@@ -398,14 +424,21 @@
 
   /* ========== 計算 ========== */
   const sorted = () => [...entries].sort((a, b) => a.date.localeCompare(b.date));
-  const startWeight = () => settings.startWeight ?? (sorted()[0]?.weight ?? null);
-  const bmiOf = (w) => settings.height ? w / Math.pow(settings.height / 100, 2) : null;
+  const series = (key) => sorted().filter((e) => e[key] != null);
+  const lastOf = (key) => series(key).slice(-1)[0];
+  const startOf = (key) => key === 'fat'
+    ? settings.startFat ?? (series('fat')[0]?.fat ?? null)
+    : settings.startWeight ?? (series('weight')[0]?.weight ?? null);
+  const bmiOf = (w) => settings.height && w != null ? w / Math.pow(settings.height / 100, 2) : null;
+
+  // 体脂肪率を f% → g% にするとき、除脂肪量を保ったまま落とす脂肪量 (kg) と、そのときの体重
+  const fatPlan = (w, f, g) => { const target = (w * (1 - f / 100)) / (1 - g / 100); return { loss: w - target, target }; };
 
   // 最小二乗法による1日あたりの変化量 (直近 n 日)
-  function slopePerDay(days = 14) {
-    const s = sorted(); if (s.length < 2) return null;
+  function slopePerDay(key, days = 21) {
+    const s = series(key); if (s.length < 3) return null;
     const last = s[s.length - 1].date;
-    const pts = s.filter((e) => daysBetween(e.date, last) <= days).map((e) => [daysBetween(s[0].date, e.date), e.weight]);
+    const pts = s.filter((e) => daysBetween(e.date, last) <= days).map((e) => [daysBetween(s[0].date, e.date), e[key]]);
     if (pts.length < 3 || pts[pts.length - 1][0] - pts[0][0] < 7) return null; // 1週間分たまるまでは予測しない
     const n = pts.length, mx = pts.reduce((a, p) => a + p[0], 0) / n, my = pts.reduce((a, p) => a + p[1], 0) / n;
     const num = pts.reduce((a, p) => a + (p[0] - mx) * (p[1] - my), 0);
@@ -413,67 +446,81 @@
     return den ? num / den : null;
   }
 
-  function avgInWindow(fromDaysAgo, toDaysAgo) {
-    const s = sorted(); if (!s.length) return null;
+  function avgInWindow(key, fromDaysAgo, toDaysAgo) {
+    const s = series(key); if (!s.length) return null;
     const last = s[s.length - 1].date;
-    const xs = s.filter((e) => { const d = daysBetween(e.date, last); return d >= toDaysAgo && d < fromDaysAgo; }).map((e) => e.weight);
+    const xs = s.filter((e) => { const d = daysBetween(e.date, last); return d >= toDaysAgo && d < fromDaysAgo; }).map((e) => e[key]);
     return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
   }
 
+  const deltaClass = (d) => d < 0 ? 'text-emerald-500' : d > 0 ? 'text-rose-500' : 'text-slate-400';
+
   /* ========== 描画: カード ========== */
   function renderCards() {
-    const s = sorted();
-    const cur = s[s.length - 1];
-    const prev = s[s.length - 2];
-    const start = startWeight();
-    const goal = settings.goal;
-
     $('todayLabel').textContent = (() => { const d = new Date(); return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 (${wd[d.getDay()]})`; })();
-    $('heroWeight').textContent = cur ? fmt(cur.weight) : '--';
-    $('cardCurrent').textContent = cur ? fmt(cur.weight) : '--';
+
+    // --- 体脂肪率 (メイン) ---
+    const fs = series('fat');
+    const cur = fs[fs.length - 1], prev = fs[fs.length - 2];
+    const start = startOf('fat'), goal = settings.goalFat;
+
+    $('heroFat').textContent = cur ? fmt(cur.fat) : '--';
+    $('cardCurrent').textContent = cur ? fmt(cur.fat) : '--';
     $('cardStart').textContent = fmt(start);
-    $('cardStartDate').textContent = settings.startWeight != null ? '手動設定' : (s[0] ? `${shortDate(s[0].date)} から` : ' ');
+    $('cardStartDate').textContent = settings.startFat != null ? '手動設定' : (fs[0] ? `${shortDate(fs[0].date)} から` : ' ');
     $('cardGoal').textContent = fmt(goal);
 
-    // 前回比
     const sub = $('cardCurrentSub');
     if (cur && prev) {
-      const d = cur.weight - prev.weight;
-      sub.className = 'text-[11px] mt-0.5 font-semibold ' + (d < 0 ? 'text-emerald-500' : d > 0 ? 'text-rose-500' : 'text-slate-400');
-      sub.textContent = `前回比 ${signed(d)} kg`;
+      const d = cur.fat - prev.fat;
+      sub.className = 'text-[11px] mt-0.5 font-semibold ' + deltaClass(d);
+      sub.textContent = `前回比 ${signed(d)} %`;
     } else { sub.className = 'text-[11px] mt-0.5 text-slate-400'; sub.textContent = cur ? shortDate(cur.date) : ' '; }
 
-    // ヒーロー差分
     const hd = $('heroDelta');
     if (cur && start != null) {
-      const d = cur.weight - start;
-      hd.innerHTML = `<i data-lucide="${d <= 0 ? 'arrow-down-right' : 'arrow-up-right'}" class="h-4 w-4"></i>開始から ${signed(d)} kg`;
-    } else hd.textContent = cur ? '' : '右下の「記録する」から始めましょう';
+      const d = cur.fat - start;
+      hd.innerHTML = `<i data-lucide="${d <= 0 ? 'arrow-down-right' : 'arrow-up-right'}" class="h-4 w-4"></i>開始から ${signed(d)} %`;
+    } else hd.textContent = cur ? '' : '「記録する」から体脂肪率を入力しましょう';
 
-    // 目標まで & 進捗
     let pct = null;
+    const w = lastOf('weight')?.weight ?? cur?.weight ?? null;
     if (cur && goal != null) {
-      const remain = cur.weight - goal;
+      const remain = cur.fat - goal;
       $('cardRemain').textContent = remain <= 0 ? '0.0' : fmt(remain);
-      $('cardGoalSub').textContent = settings.height ? `BMI ${fmt(bmiOf(goal))}` : ' ';
-      if (start != null && start !== goal) pct = Math.max(0, Math.min(100, ((start - cur.weight) / (start - goal)) * 100));
+      $('cardRemainSub').textContent = remain > 0 && w ? `脂肪 約${fmt(fatPlan(w, cur.fat, goal).loss)}kg` : (remain <= 0 ? '達成！' : ' ');
+      $('cardGoalSub').textContent = w ? `体重目安 ${fmt(fatPlan(w, cur.fat, goal).target)}kg` : ' ';
+      if (start != null && start !== goal) pct = Math.max(0, Math.min(100, ((start - cur.fat) / (start - goal)) * 100));
       if (remain <= 0) pct = 100;
     } else {
       $('cardRemain').textContent = '--';
+      $('cardRemainSub').textContent = ' ';
       $('cardGoalSub').textContent = goal == null ? '設定で入力' : ' ';
     }
     $('progressPct').textContent = pct == null ? '--%' : `${Math.round(pct)}%`;
     $('ring').style.strokeDashoffset = 326.73 * (1 - (pct ?? 0) / 100);
-    $('remainBar').style.width = `${pct ?? 0}%`;
 
-    // 到達予測
-    const slope = slopePerDay(21);
+    const slope = slopePerDay('fat', 28);
     const eta = $('heroEta');
-    if (cur && goal != null && slope != null && cur.weight > goal && slope < -0.005) {
-      const days = Math.ceil((cur.weight - goal) / -slope);
+    if (cur && goal != null && slope != null && cur.fat > goal && slope < -0.005) {
+      const days = Math.ceil((cur.fat - goal) / -slope);
       const d = new Date(); d.setDate(d.getDate() + days);
       eta.textContent = days < 1000 ? `このペースなら ${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} 頃に目標達成（約${days}日）` : '';
-    } else eta.textContent = '';
+    } else if (cur && goal == null) eta.textContent = '設定で目標体脂肪率を入れると達成率が出ます';
+    else eta.textContent = '';
+
+    // --- 体重 (補助) ---
+    const ws = series('weight');
+    const wc = ws[ws.length - 1], wp = ws[ws.length - 2];
+    $('wCurrent').textContent = wc ? fmt(wc.weight) : '--';
+    const wd_ = $('wDelta');
+    if (wc && wp) { const d = wc.weight - wp.weight; wd_.className = 'ml-1.5 text-xs font-semibold ' + deltaClass(d); wd_.textContent = `前回比 ${signed(d)}`; }
+    else wd_.textContent = '';
+    const bmi = bmiOf(wc?.weight);
+    const parts = [];
+    if (bmi != null) parts.push(`BMI ${fmt(bmi)}`);
+    if (settings.goal != null) parts.push(`目標 ${fmt(settings.goal)}kg`);
+    $('wSub').innerHTML = parts.join('<br>');
   }
 
   /* ========== 描画: グラフ ========== */
@@ -491,28 +538,31 @@
       const on = b.dataset.range === settings.range;
       b.className = 'h-7 px-3 rounded-full transition ' + (on ? 'bg-white dark:bg-white/15 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400');
     });
-    const fb = $('btnFat');
-    fb.classList.toggle('bg-amber-50', settings.showFat);
-    fb.classList.toggle('dark:bg-amber-400/10', settings.showFat);
-    fb.classList.toggle('opacity-50', !settings.showFat);
+    const wb = $('btnWeight');
+    wb.classList.toggle('bg-violet-50', settings.showWeight);
+    wb.classList.toggle('dark:bg-violet-400/10', settings.showWeight);
+    wb.classList.toggle('opacity-50', !settings.showWeight);
+
+    const fats = data.filter((e) => e.fat != null).map((e) => e.fat);
+    const weights = data.filter((e) => e.weight != null).map((e) => e.weight);
+    const hasFat = fats.length > 0;
+    const hasWeight = settings.showWeight && weights.length > 0;
 
     $('chartEmpty').classList.toggle('hidden', data.length > 0);
-    if (data.length) {
-      const w = data.map((e) => e.weight);
-      $('chartSummary').textContent = `${shortDate(data[0].date)} – ${shortDate(data[data.length - 1].date)} ・ 最小 ${fmt(Math.min(...w))} / 最大 ${fmt(Math.max(...w))} kg`;
-    } else $('chartSummary').textContent = ' ';
+    if (hasFat) $('chartSummary').textContent = `${shortDate(data[0].date)} – ${shortDate(data[data.length - 1].date)} ・ 体脂肪率 最小 ${fmt(Math.min(...fats))} / 最大 ${fmt(Math.max(...fats))} %`;
+    else if (data.length) $('chartSummary').textContent = '体脂肪率を記録するとメインのグラフが表示されます';
+    else $('chartSummary').textContent = ' ';
 
     const dark = document.documentElement.classList.contains('dark');
     const grid = dark ? 'rgba(255,255,255,.06)' : 'rgba(15,23,42,.06)';
     const tick = dark ? '#94a3b8' : '#64748b';
-    const hasFat = settings.showFat && data.some((e) => e.fat != null);
+    const many = data.length > 40;
 
     const labels = data.map((e) => shortDate(e.date));
-    const datasets = [
-      {
-        label: '体重',
-        data: data.map((e) => e.weight),
-        yAxisID: 'y',
+    const datasets = [];
+    if (hasFat) {
+      datasets.push({
+        label: '体脂肪率', unit: '%', data: data.map((e) => e.fat ?? null), yAxisID: 'y', spanGaps: true,
         borderColor: (ctx) => {
           const { chart } = ctx; const { ctx: c, chartArea } = chart; if (!chartArea) return '#6366f1';
           const g = c.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
@@ -525,29 +575,28 @@
           g.addColorStop(1, 'rgba(99,102,241,0)'); return g;
         },
         fill: true, tension: 0.42, cubicInterpolationMode: 'monotone',
-        borderWidth: 3, pointRadius: data.length > 40 ? 0 : 3.5, pointHoverRadius: 6,
-        pointBackgroundColor: dark ? '#0b0f1a' : '#fff', pointBorderColor: '#8b5cf6', pointBorderWidth: 2,
-        order: 1,
-      },
-    ];
-    if (settings.goal != null && data.length) {
-      datasets.push({
-        label: '目標', data: data.map(() => settings.goal), yAxisID: 'y',
-        borderColor: '#10b981', borderDash: [6, 6], borderWidth: 2, pointRadius: 0, pointHoverRadius: 0, fill: false, order: 3,
+        borderWidth: 3, pointRadius: many ? 0 : 3.5, pointHoverRadius: 6,
+        pointBackgroundColor: dark ? '#0b0f1a' : '#fff', pointBorderColor: '#8b5cf6', pointBorderWidth: 2, order: 1,
       });
+      if (settings.goalFat != null) {
+        datasets.push({
+          label: '目標', unit: '%', data: data.map(() => settings.goalFat), yAxisID: 'y',
+          borderColor: '#10b981', borderDash: [6, 6], borderWidth: 2, pointRadius: 0, pointHoverRadius: 0, fill: false, order: 3,
+        });
+      }
     }
-    if (hasFat) {
+    if (hasWeight) {
       datasets.push({
-        label: '体脂肪率', data: data.map((e) => e.fat ?? null), yAxisID: 'y1', spanGaps: true,
-        borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderWidth: 2, tension: 0.4, cubicInterpolationMode: 'monotone',
-        pointRadius: data.length > 40 ? 0 : 2.5, fill: false, order: 2,
+        label: '体重', unit: 'kg', data: data.map((e) => e.weight ?? null), yAxisID: 'y1', spanGaps: true,
+        borderColor: dark ? 'rgba(167,139,250,.55)' : 'rgba(139,92,246,.5)', backgroundColor: '#a78bfa',
+        borderWidth: 1.5, tension: 0.4, cubicInterpolationMode: 'monotone', pointRadius: many ? 0 : 2, fill: false, order: 2,
       });
     }
 
     // Y軸の範囲 (目標線が必ず入るように)
-    const ws = data.map((e) => e.weight).concat(settings.goal != null ? [settings.goal] : []);
-    const yMin = ws.length ? Math.floor(Math.min(...ws) - 1) : undefined;
-    const yMax = ws.length ? Math.ceil(Math.max(...ws) + 1) : undefined;
+    const fr = fats.concat(settings.goalFat != null && hasFat ? [settings.goalFat] : []);
+    const yMin = fr.length ? Math.floor(Math.min(...fr) - 1) : undefined;
+    const yMax = fr.length ? Math.ceil(Math.max(...fr) + 1) : undefined;
 
     const cfg = {
       type: 'line',
@@ -561,17 +610,18 @@
           tooltip: {
             backgroundColor: dark ? '#1e293b' : '#0f172a', padding: 10, cornerRadius: 10, displayColors: true, boxPadding: 4,
             titleFont: { family: 'Inter', weight: '600' }, bodyFont: { family: 'Inter' },
+            filter: (it) => it.raw != null,
             callbacks: {
               title: (items) => { const e = data[items[0].dataIndex]; const d = parseISO(e.date); return `${d.getMonth() + 1}月${d.getDate()}日 (${wd[d.getDay()]})`; },
-              label: (it) => it.dataset.label === '体脂肪率' ? ` 体脂肪率 ${fmt(it.raw)} %` : ` ${it.dataset.label} ${fmt(it.raw)} kg`,
+              label: (it) => ` ${it.dataset.label} ${fmt(it.raw)} ${it.dataset.unit}`,
               afterBody: (items) => { const m = data[items[0].dataIndex].memo; return m ? `📝 ${m}` : ''; },
             },
           },
         },
         scales: {
           x: { grid: { display: false }, border: { display: false }, ticks: { color: tick, maxRotation: 0, autoSkip: true, maxTicksLimit: 7, font: { family: 'Inter', size: 11 } } },
-          y: { position: 'left', min: yMin, max: yMax, grid: { color: grid }, border: { display: false }, ticks: { color: tick, font: { family: 'Inter', size: 11 }, callback: (v) => v + 'kg' } },
-          y1: { display: hasFat, position: 'right', grid: { display: false }, border: { display: false }, ticks: { color: '#f59e0b', font: { family: 'Inter', size: 11 }, callback: (v) => v + '%' } },
+          y: { display: hasFat, position: 'left', min: yMin, max: yMax, grid: { color: grid }, border: { display: false }, ticks: { color: tick, font: { family: 'Inter', size: 11 }, callback: (v) => v + '%' } },
+          y1: { display: hasWeight, position: 'right', grid: { display: !hasFat, color: grid }, border: { display: false }, ticks: { color: '#a78bfa', font: { family: 'Inter', size: 11 }, callback: (v) => v + 'kg' } },
         },
       },
     };
@@ -584,7 +634,7 @@
     const b = e.target.closest('button'); if (!b) return;
     settings.range = b.dataset.range; persistSettings(); renderChart();
   });
-  $('btnFat').onclick = () => { settings.showFat = !settings.showFat; persistSettings(); renderChart(); };
+  $('btnWeight').onclick = () => { settings.showWeight = !settings.showWeight; persistSettings(); renderChart(); };
 
   /* ========== AI 健康アドバイス (ルールベース) ========== */
   const TONE = {
@@ -595,100 +645,81 @@
   };
 
   function generateAdvice() {
-    const s = sorted();
+    const all = sorted();
     const out = [];
     const add = (tone, icon, title, body) => out.push({ tone, icon, title, body });
 
-    if (!s.length) {
-      add('info', 'hand', 'ようこそ！', 'まずは今日の体重を記録しましょう。毎朝、起床・トイレ後の同じタイミングで測るのがおすすめです。');
-      if (!settings.height || settings.goal == null) add('info', 'settings-2', '初期設定', '右上の設定から身長と目標体重を入力すると、BMIや達成率が表示されます。');
+    if (!all.length) {
+      add('info', 'hand', 'ようこそ！', 'まずは今日の体脂肪率を記録しましょう。毎朝、起床・トイレ後の同じタイミングで測るのがおすすめです。');
+      if (settings.goalFat == null) add('info', 'settings-2', '初期設定', '右上の設定から目標体脂肪率を入力すると、達成率と到達予測日が表示されます。');
       return out;
     }
 
-    const cur = s[s.length - 1];
-    const goal = settings.goal;
-
     // 記録の鮮度
-    const gap = daysBetween(cur.date, todayISO());
-    if (gap >= 3) add('warn', 'calendar-clock', `${gap}日間記録がありません`, '体重は毎日測ることで「一時的な変動」と「本当の変化」を見分けられます。今日から再開しましょう。');
+    const gap = daysBetween(all[all.length - 1].date, todayISO());
+    if (gap >= 3) add('warn', 'calendar-clock', `${gap}日間記録がありません`, '毎日測ることで「一時的な変動」と「本当の変化」を見分けられます。今日から再開しましょう。');
 
-    // 目標達成
-    if (goal != null && cur.weight <= goal) {
-      add('good', 'trophy', '目標達成おめでとうございます！🎉', '今後は ±1kg の範囲をキープする「維持期」です。食事量を少しずつ戻し、リバウンドを防ぎましょう。');
-    }
-
-    // 直近3回のトレンド
-    const last3 = s.slice(-3);
-    if (last3.length >= 2) {
-      const span = Math.max(1, daysBetween(last3[0].date, cur.date));
-      const diff = cur.weight - last3[0].weight;
-      const perDay = diff / span;
-      const dayDiff = s.length >= 2 ? cur.weight - s[s.length - 2].weight : 0;
-
-      if (dayDiff >= 1.0) {
-        add('warn', 'droplets', '一時的な増加です。水分を多めに取りましょう', `前回から ${signed(dayDiff)}kg。急な増加の多くは塩分・糖質によるむくみ（水分）です。水やお茶をこまめに飲み、カリウムの多い野菜・海藻で排出を促しましょう。`);
-      } else if (perDay <= -0.35) {
-        add('alert', 'alert-triangle', '減少ペースが速すぎます', `直近${span}日で ${signed(diff)}kg。急激な減量は筋肉や水分が落ちているサインかもしれません。たんぱく質（体重×1.2〜1.6g/日）と水分をしっかり摂りましょう。`);
-      } else if (diff <= -0.1) {
-        add('good', 'party-popper', '順調です！', `直近${span}日で ${signed(diff)}kg。この調子で、今の食事と生活リズムを続けましょう。`);
-      } else if (Math.abs(diff) < 0.1) {
-        add('info', 'minus', '横ばいです', '数日の停滞はよくあることです。焦らず、睡眠時間と歩数を意識してみましょう。');
-      } else if (diff > 0) {
-        add('warn', 'cup-soda', 'やや増加傾向です', `直近${span}日で ${signed(diff)}kg。夜遅い食事や間食、アルコールを振り返ってみましょう。水分を多めに取り、塩分は控えめに。`);
-      }
-    }
-
-    // 週平均の比較 (日々の変動をならした本質的なトレンド)
-    const thisWeek = avgInWindow(7, 0);
-    const lastWeek = avgInWindow(14, 7);
-    if (thisWeek != null && lastWeek != null) {
-      const d = thisWeek - lastWeek;
-      if (d <= -0.2) add('good', 'trending-down', '週平均が下がっています', `直近7日の平均 ${fmt(thisWeek)}kg（前週比 ${signed(d)}kg）。日々の上下より、この平均値の変化が本当の成果です。`);
-      else if (Math.abs(d) < 0.2 && s.length >= 14) add('info', 'repeat', '停滞期かもしれません', `週平均の変化は ${signed(d)}kg。体が変化に適応する時期です。1日だけ食事量を少し増やす「チートデイ」や、筋トレの追加が効果的な場合があります。`);
-      else if (d >= 0.3) add('warn', 'trending-up', '週平均が増えています', `前週比 ${signed(d)}kg。まずは1日の食事を記録して、摂取量を「見える化」してみましょう。`);
-    }
-
-    // 体脂肪と体重の関係
-    const fats = s.filter((e) => e.fat != null);
-    if (fats.length >= 2) {
-      const a = fats[Math.max(0, fats.length - 7)], b = fats[fats.length - 1];
-      const dw = b.weight - a.weight, df = b.fat - a.fat;
-      if (dw < -0.3 && df > 0.3) add('warn', 'dumbbell', '筋肉量の低下に注意', `体重は減っていますが体脂肪率が ${signed(df)}% 上昇。スクワットなどの筋トレと、たんぱく質の摂取を増やしましょう。`);
-      else if (df <= -0.5) add('good', 'flame', '体脂肪が減っています', `体脂肪率 ${signed(df)}%。脂肪がしっかり燃えています。`);
-    }
-
-    // BMI
-    const bmi = bmiOf(cur.weight);
-    if (bmi != null) {
-      if (bmi < 18.5) add('alert', 'heart-pulse', '低体重の範囲です', 'BMI 18.5 未満です。これ以上の減量は控え、栄養バランスの良い食事を心がけましょう。');
-      else if (bmi >= 25 && goal == null) add('info', 'target', '目標を決めましょう', '設定で目標体重を入力すると、達成率と到達予測日を表示できます。');
+    /* ---- 体脂肪率 (最優先) ---- */
+    const fs = series('fat');
+    const goalF = settings.goalFat;
+    const w = lastOf('weight')?.weight ?? null;
+    if (!fs.length) {
+      add('info', 'percent', '体脂肪率を記録しましょう', '「記録する」から体脂肪率を入力すると、目標までの達成率や脂肪の減り方を分析します。');
     } else {
-      add('info', 'ruler', '身長を設定してください', '設定で身長を入力すると BMI を自動計算します。');
-    }
+      const cf = fs[fs.length - 1];
+      if (goalF == null) {
+        add('info', 'target', '目標体脂肪率を決めましょう', '設定で目標を入れると、達成率・残りの脂肪量・到達予測日を表示できます。');
+      } else if (cf.fat <= goalF) {
+        add('good', 'trophy', '目標体脂肪率を達成！🎉', `現在 ${fmt(cf.fat)}%（目標 ${fmt(goalF)}%）。これからは筋トレとたんぱく質で今の体組成をキープしましょう。`);
+      } else if (w) {
+        const { loss, target } = fatPlan(w, cf.fat, goalF);
+        add('info', 'target', `目標まであと ${fmt(cf.fat - goalF)}%`,
+          `筋肉量を保ったまま脂肪を約${fmt(loss)}kg 落とすと到達します（そのときの体重目安 ${fmt(target)}kg）。月に脂肪1〜2kgペースなら約${Math.max(1, Math.round(loss / 1.5))}ヶ月です。`);
+      }
 
-    // 目標までのペース
-    const slope = slopePerDay(21);
-    if (goal != null && cur.weight > goal && slope != null) {
-      const perMonth = slope * 30;
-      const safe = cur.weight * 0.05; // 1ヶ月に体重の5%以内が目安
-      if (perMonth > -0.1 && out.every((o) => o.tone !== 'warn')) {
-        add('info', 'footprints', 'あと一押し', '1日の歩数を +2,000歩（約20分の散歩）増やすと、月に約0.5kgの脂肪燃焼に相当します。');
-      } else if (-perMonth > safe) {
-        add('warn', 'gauge', 'ペースを少し落としましょう', `現在のペースは月 ${fmt(-perMonth)}kg。健康的な目安は月に体重の5%（約${fmt(safe)}kg）以内です。`);
+      // 1週間前との比較
+      const ref = fs.slice().reverse().find((e) => daysBetween(e.date, cf.date) >= 6);
+      if (ref) {
+        const df = cf.fat - ref.fat, span = daysBetween(ref.date, cf.date);
+        if (df <= -0.3) add('good', 'flame', '順調です！体脂肪が減っています', `${span}日前より ${signed(df)}%。今の食事とトレーニングを続けましょう。`);
+        else if (df >= 0.5) add('warn', 'trending-up', '体脂肪率が上がっています', `${span}日前より ${signed(df)}%。夜遅い食事・間食・アルコールを見直し、たんぱく質中心の食事にしてみましょう。`);
+        else if (fs.length >= 10) add('info', 'repeat', '体脂肪率は横ばいです', `${span}日間で ${signed(df)}%。週2〜3回の筋トレ（スクワット・腕立てなど）を加えると、脂肪が落ちやすくなります。`);
+      }
+
+      // 前回からの急な変化 (水分による誤差)
+      const pf = fs[fs.length - 2];
+      if (pf && Math.abs(cf.fat - pf.fat) >= 1.0) {
+        add('info', 'droplets', '体脂肪率は水分で大きく変わります', `前回から ${signed(cf.fat - pf.fat)}%。体組成計は体内の水分で1日に1〜2%ぶれます。水分を多めに取り、毎日同じ時間に測って「週の平均」で判断しましょう。`);
+      }
+
+      // ペースが速すぎる
+      const sf = slopePerDay('fat', 28);
+      if (sf != null && sf * 30 < -2.5) add('warn', 'gauge', '体脂肪の減り方が速すぎるかも', `月 ${fmt(-sf * 30)}% ペースです。極端な食事制限は筋肉も落とします。たんぱく質（体重×1.2〜1.6g/日）をしっかり摂りましょう。`);
+
+      // 体重は減っているのに体脂肪率が上がる → 筋肉減少
+      const a = fs[Math.max(0, fs.length - 7)];
+      if (a !== cf && a.weight != null && cf.weight != null) {
+        const dw = cf.weight - a.weight, df = cf.fat - a.fat;
+        if (dw < -0.3 && df > 0.3) add('warn', 'dumbbell', '筋肉量の低下に注意', `体重は ${signed(dw)}kg なのに体脂肪率は ${signed(df)}%。筋肉が落ちているサインです。筋トレとたんぱく質を増やしましょう。`);
       }
     }
 
-    // メモからのヒント
-    if (cur.memo && /飲み|酒|ビール|外食|焼肉|ラーメン/.test(cur.memo)) {
-      add('info', 'glass-water', '食べ過ぎた翌日は', '翌日の増加の多くは水分です。水を多めに飲み、次の食事を軽めにすれば2〜3日で戻ります。');
+    /* ---- 体重 (補助) ---- */
+    const ws = series('weight');
+    if (ws.length >= 2) {
+      const cw = ws[ws.length - 1];
+      const dayDiff = cw.weight - ws[ws.length - 2].weight;
+      if (dayDiff >= 1.0) add('warn', 'cup-soda', '体重が一時的に増えています', `前回から ${signed(dayDiff)}kg。多くは塩分・糖質によるむくみ（水分）です。水やお茶をこまめに飲み、野菜・海藻でカリウムを摂りましょう。`);
+      const bmi = bmiOf(cw.weight);
+      if (bmi != null && bmi < 18.5) add('alert', 'heart-pulse', '低体重の範囲です', 'BMI 18.5 未満です。体脂肪を落とすより、筋肉を増やす方向（食事量を確保＋筋トレ）がおすすめです。');
+      if (cw.memo && /飲み|酒|ビール|外食|焼肉|ラーメン/.test(cw.memo)) add('info', 'glass-water', '食べ過ぎた翌日は', '翌日の増加の多くは水分です。水を多めに飲み、次の食事を軽めにすれば2〜3日で戻ります。');
     }
 
     return out.slice(0, 5);
   }
 
   function renderAdvice() {
-    const s = sorted(); const cur = s[s.length - 1];
-    const bmi = cur ? bmiOf(cur.weight) : null;
+    const bmi = bmiOf(lastOf('weight')?.weight);
     const badge = $('bmiBadge'); const marker = $('bmiMarker');
     if (bmi != null) {
       $('bmiValue').textContent = fmt(bmi);
@@ -721,9 +752,9 @@
     const s = sorted().reverse();
     $('historyCount').textContent = s.length ? `${s.length}件` : '';
     if (!s.length) { $('historyList').innerHTML = '<li class="py-8 text-center text-sm text-slate-400">まだ記録がありません</li>'; return; }
-    $('historyList').innerHTML = s.slice(0, 200).map((e, i) => {
-      const prev = s[i + 1];
-      const d = prev ? e.weight - prev.weight : null;
+    $('historyList').innerHTML = s.slice(0, 200).map((e) => {
+      const prev = e.fat != null ? s.find((x) => x.date < e.date && x.fat != null) : null;
+      const d = prev ? e.fat - prev.fat : null;
       const dc = d == null ? '' : d < 0 ? 'text-emerald-500' : d > 0 ? 'text-rose-500' : 'text-slate-400';
       const dt = parseISO(e.date);
       return `
@@ -733,8 +764,8 @@
             <div class="text-center"><p class="text-[10px] text-slate-400">${dt.getMonth() + 1}月</p><p class="text-sm font-bold num">${dt.getDate()}</p></div>
           </div>
           <div class="min-w-0">
-            <p class="font-semibold num">${fmt(e.weight)} <span class="text-xs text-slate-400 font-normal">kg</span>
-              ${e.fat != null ? `<span class="ml-1.5 text-xs text-amber-500 font-medium">${fmt(e.fat)}%</span>` : ''}
+            <p class="font-semibold num">${e.fat != null ? `${fmt(e.fat)} <span class="text-xs text-slate-400 font-normal">%</span>` : '<span class="text-slate-400">--</span>'}
+              ${e.weight != null ? `<span class="ml-1.5 text-xs text-violet-500 dark:text-violet-300 font-medium">${fmt(e.weight)}kg</span>` : ''}
               ${e.src === 'hc' ? '<span class="ml-1 align-middle text-[10px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300 font-semibold">自動</span>' : ''}</p>
             <p class="text-xs text-slate-400 truncate">${e.memo ? esc(e.memo) : wd[dt.getDay()] + '曜日'}</p>
           </div>
@@ -779,26 +810,27 @@
   document.addEventListener('keydown', (e) => e.key === 'Escape' && closeSheet());
 
   function openEntry(entry) {
-    const last = sorted().slice(-1)[0];
+    const lastF = lastOf('fat');
     $('entryTitle').textContent = entry ? '記録を編集' : '今日の記録';
     $('fDate').value = entry?.date ?? todayISO();
     $('fDate').max = todayISO();
-    $('fWeight').value = entry?.weight ?? '';
-    $('fWeight').placeholder = last ? fmt(last.weight) : '65.0';
     $('fFat').value = entry?.fat ?? '';
+    $('fFat').placeholder = lastF ? fmt(lastF.fat) : '20.0';
+    $('fWeight').value = entry?.weight ?? '';
     $('fMemo').value = entry?.memo ?? '';
     openSheet($('entrySheet'));
-    setTimeout(() => $('fWeight').focus(), 320);
+    setTimeout(() => $('fFat').focus(), 320);
   }
   $('fab').onclick = () => openEntry(entries.find((x) => x.date === todayISO()));
 
   $('entryForm').onsubmit = (e) => {
     e.preventDefault();
     const date = $('fDate').value;
-    const weight = parseFloat($('fWeight').value);
-    const fatRaw = $('fFat').value.trim();
-    if (!date || isNaN(weight)) return;
-    const rec = { date, weight: Math.round(weight * 10) / 10, fat: fatRaw === '' ? null : Math.round(parseFloat(fatRaw) * 10) / 10, memo: $('fMemo').value.trim() };
+    const num1 = (id) => { const v = parseFloat($(id).value); return isNaN(v) ? null : Math.round(v * 10) / 10; };
+    const fat = num1('fFat'), weight = num1('fWeight');
+    if (!date) return;
+    if (fat == null && weight == null) { toast('体脂肪率か体重を入力してください'); return; }
+    const rec = { date, weight, fat, memo: $('fMemo').value.trim() };
     const i = entries.findIndex((x) => x.date === date);
     const old = entries[i];
     if (old?.src === 'hc' && old.weight === rec.weight) rec.src = 'hc'; // 体脂肪率・メモだけの追記なら自動連携を維持
@@ -809,6 +841,8 @@
   };
 
   $('btnSettings').onclick = () => {
+    $('sGoalFat').value = settings.goalFat ?? '';
+    $('sStartFat').value = settings.startFat ?? '';
     $('sHeight').value = settings.height ?? '';
     $('sGoal').value = settings.goal ?? '';
     $('sStart').value = settings.startWeight ?? '';
@@ -817,6 +851,7 @@
   $('settingsForm').onsubmit = (e) => {
     e.preventDefault();
     const num = (id) => { const v = parseFloat($(id).value); return isNaN(v) ? null : v; };
+    settings.goalFat = num('sGoalFat'); settings.startFat = num('sStartFat');
     settings.height = num('sHeight'); settings.goal = num('sGoal'); settings.startWeight = num('sStart');
     persistSettings(); closeSheet(); renderAll(); toast('設定を保存しました');
   };
@@ -889,7 +924,7 @@
   };
 
   $('btnExportCsv').onclick = () => {
-    const lines = ['date,weight_kg,body_fat_pct,memo', ...sorted().map((e) => `${e.date},${e.weight},${e.fat ?? ''},"${(e.memo || '').replace(/"/g, '""')}"`)];
+    const lines = ['date,weight_kg,body_fat_pct,memo', ...sorted().map((e) => `${e.date},${e.weight ?? ''},${e.fat ?? ''},"${(e.memo || '').replace(/"/g, '""')}"`)];
     if (window.HealthBridge) { window.HealthBridge.saveFile(`weight-log-${todayISO()}.csv`, lines.join('\n')); return; }
     const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `weight-log-${todayISO()}.csv`; a.click();
@@ -906,7 +941,7 @@
       }
       d.setDate(d.getDate() + 1);
     }
-    entries = out; settings.height = settings.height ?? 170; settings.goal = settings.goal ?? 66;
+    entries = out; settings.height = settings.height ?? 170; settings.goal = settings.goal ?? 66; settings.goalFat = settings.goalFat ?? 22;
     persist(); persistSettings(); closeSheet(); renderAll(); toast('デモデータを読み込みました');
   };
 
@@ -929,7 +964,10 @@
         let n = 0;
         for (const r of res.records || []) {
           const old = map.get(r.date);
-          if (old && old.src !== 'hc') continue; // 手入力を優先
+          if (old && old.src !== 'hc') { // 手入力を優先 (体重が空なら体重だけ補う)
+            if (old.weight == null) { map.set(r.date, { ...old, weight: r.weight }); n++; }
+            continue;
+          }
           const fat = r.fat ?? old?.fat ?? null;
           if (old && old.weight === r.weight && old.fat === fat) continue;
           map.set(r.date, { date: r.date, weight: r.weight, fat, memo: old?.memo || '', src: 'hc' });
