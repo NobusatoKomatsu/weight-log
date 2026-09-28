@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="ja" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>体重ログ</title>
+  <meta name="description" content="個人向け体重管理ダッシュボード" />
+  <meta name="theme-color" content="#0b0f1a" id="metaTheme" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="体重ログ" />
+  <link rel="icon" id="favicon" />
+  <link rel="apple-touch-icon" id="touchIcon" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', '"Noto Sans JP"', 'system-ui', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+
+  <style>
+    :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
+    html, body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+    body { font-feature-settings: "tnum" 1; }
+    .glass { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+    .num { font-variant-numeric: tabular-nums; }
+    .sheet { transition: transform .32s cubic-bezier(.2,.8,.2,1); }
+    .fade { transition: opacity .25s ease; }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: var(--cal-filter, none); opacity: .7; }
+    .dark input[type="date"] { --cal-filter: invert(1); }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .ring-progress { transition: stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1); }
+    @keyframes pop { 0% { transform: translateY(8px); opacity: 0 } 100% { transform: none; opacity: 1 } }
+    .pop { animation: pop .35s ease both; }
+  </style>
+</head>
+
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0b0f1a] dark:text-slate-100 font-sans antialiased">
+  <!-- 背景の装飾グロー -->
+  <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+    <div class="absolute -top-32 -left-24 h-80 w-80 rounded-full bg-indigo-400/20 blur-3xl dark:bg-indigo-600/20"></div>
+    <div class="absolute top-40 -right-24 h-72 w-72 rounded-full bg-fuchsia-300/20 blur-3xl dark:bg-fuchsia-600/10"></div>
+  </div>
+
+  <!-- ヘッダー -->
+  <header class="sticky top-0 z-30 glass bg-white/70 dark:bg-[#0b0f1a]/70 border-b border-slate-200/70 dark:border-white/5" style="padding-top: var(--safe-top)">
+    <div class="mx-auto max-w-5xl px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="h-8 w-8 rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 grid place-items-center shadow-lg shadow-indigo-500/30">
+          <i data-lucide="activity" class="h-4 w-4 text-white"></i>
+        </div>
+        <div class="leading-tight">
+          <p class="font-bold tracking-tight">体重ログ</p>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400" id="todayLabel"></p>
+        </div>
+      </div>
+      <div class="flex items-center gap-1">
+        <button id="btnTheme" class="h-10 w-10 grid place-items-center rounded-xl hover:bg-slate-200/60 dark:hover:bg-white/5" aria-label="テーマ切替">
+          <i data-lucide="sun" class="h-5 w-5 hidden dark:block"></i>
+          <i data-lucide="moon" class="h-5 w-5 dark:hidden"></i>
+        </button>
+        <button id="btnSettings" class="h-10 w-10 grid place-items-center rounded-xl hover:bg-slate-200/60 dark:hover:bg-white/5" aria-label="設定">
+          <i data-lucide="settings-2" class="h-5 w-5"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-4 pt-5 space-y-5" style="padding-bottom: calc(6.5rem + var(--safe-bottom))">
+
+    <!-- 進捗ヒーロー -->
+    <section class="pop rounded-3xl p-5 bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-xl shadow-indigo-600/20 relative overflow-hidden">
+      <div class="absolute -right-10 -bottom-16 h-48 w-48 rounded-full bg-white/10"></div>
+      <div class="flex items-center gap-5 relative">
+        <div class="relative h-28 w-28 shrink-0">
+          <svg viewBox="0 0 120 120" class="h-28 w-28 -rotate-90">
+            <circle cx="60" cy="60" r="52" stroke="rgba(255,255,255,.18)" stroke-width="10" fill="none" />
+            <circle id="ring" cx="60" cy="60" r="52" stroke="white" stroke-width="10" fill="none" stroke-linecap="round"
+                    stroke-dasharray="326.73" stroke-dashoffset="326.73" class="ring-progress" />
+          </svg>
+          <div class="absolute inset-0 grid place-items-center text-center">
+            <div>
+              <p class="text-2xl font-extrabold num" id="progressPct">--%</p>
+              <p class="text-[10px] uppercase tracking-widest text-white/70">達成率</p>
+            </div>
+          </div>
+        </div>
+        <div class="min-w-0">
+          <p class="text-sm text-white/75">現在の体重</p>
+          <p class="text-4xl font-extrabold tracking-tight num"><span id="heroWeight">--</span><span class="text-lg font-semibold text-white/80 ml-1">kg</span></p>
+          <p class="mt-1 text-sm text-white/85 flex items-center gap-1.5" id="heroDelta"></p>
+          <p class="mt-1 text-xs text-white/70" id="heroEta"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 指標カード -->
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="pop rounded-2xl p-4 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">開始体重 <i data-lucide="flag" class="h-4 w-4"></i></div>
+        <p class="mt-2 text-2xl font-bold num"><span id="cardStart">--</span><span class="text-sm font-medium text-slate-400 ml-0.5">kg</span></p>
+        <p class="text-[11px] text-slate-400 mt-0.5" id="cardStartDate">&nbsp;</p>
+      </div>
+      <div class="pop rounded-2xl p-4 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">現在体重 <i data-lucide="scale" class="h-4 w-4"></i></div>
+        <p class="mt-2 text-2xl font-bold num"><span id="cardCurrent">--</span><span class="text-sm font-medium text-slate-400 ml-0.5">kg</span></p>
+        <p class="text-[11px] mt-0.5" id="cardCurrentSub">&nbsp;</p>
+      </div>
+      <div class="pop rounded-2xl p-4 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">目標体重 <i data-lucide="target" class="h-4 w-4"></i></div>
+        <p class="mt-2 text-2xl font-bold num"><span id="cardGoal">--</span><span class="text-sm font-medium text-slate-400 ml-0.5">kg</span></p>
+        <p class="text-[11px] text-slate-400 mt-0.5" id="cardGoalSub">&nbsp;</p>
+      </div>
+      <div class="pop rounded-2xl p-4 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">目標まで <i data-lucide="trending-down" class="h-4 w-4"></i></div>
+        <p class="mt-2 text-2xl font-bold num text-indigo-600 dark:text-indigo-400"><span id="cardRemain">--</span><span class="text-sm font-medium text-slate-400 ml-0.5">kg</span></p>
+        <div class="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+          <div id="remainBar" class="h-full w-0 rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 transition-all duration-700"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- グラフ -->
+    <section class="pop rounded-3xl p-4 sm:p-5 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <div>
+          <h2 class="font-bold tracking-tight">推移</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400" id="chartSummary">&nbsp;</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btnFat" class="h-8 px-3 rounded-full text-xs font-semibold border border-slate-200 dark:border-white/10 flex items-center gap-1.5">
+            <span class="h-2 w-2 rounded-full bg-amber-400"></span>体脂肪率
+          </button>
+          <div class="flex p-0.5 rounded-full bg-slate-100 dark:bg-white/5 text-xs font-semibold" id="rangeTabs">
+            <button data-range="7"   class="h-7 px-3 rounded-full">7日</button>
+            <button data-range="30"  class="h-7 px-3 rounded-full">30日</button>
+            <button data-range="90"  class="h-7 px-3 rounded-full">90日</button>
+            <button data-range="all" class="h-7 px-3 rounded-full">全期間</button>
+          </div>
+        </div>
+      </div>
+      <div class="relative h-64 sm:h-80">
+        <canvas id="chart"></canvas>
+        <div id="chartEmpty" class="hidden absolute inset-0 grid place-items-center text-center text-sm text-slate-400">
+          <div><i data-lucide="line-chart" class="h-8 w-8 mx-auto mb-2 opacity-60"></i>記録を追加するとグラフが表示されます</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid md:grid-cols-5 gap-5">
+      <!-- AIアドバイス -->
+      <section class="md:col-span-3 pop rounded-3xl p-5 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="h-8 w-8 rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 grid place-items-center">
+            <i data-lucide="sparkles" class="h-4 w-4 text-white"></i>
+          </div>
+          <div>
+            <h2 class="font-bold tracking-tight leading-tight">AI 健康アドバイス</h2>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">記録データから自動分析</p>
+          </div>
+        </div>
+
+        <!-- BMI -->
+        <div class="rounded-2xl p-4 bg-slate-50 dark:bg-white/[.03] border border-slate-100 dark:border-white/5 mb-4">
+          <div class="flex items-end justify-between">
+            <div>
+              <p class="text-xs text-slate-500 dark:text-slate-400">BMI</p>
+              <p class="text-3xl font-extrabold num" id="bmiValue">--</p>
+            </div>
+            <span id="bmiBadge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-200 dark:bg-white/10">身長未設定</span>
+          </div>
+          <div class="mt-3 relative">
+            <div class="h-2 rounded-full overflow-hidden flex">
+              <div class="bg-sky-400" style="width:17.5%"></div>
+              <div class="bg-emerald-400" style="width:32.5%"></div>
+              <div class="bg-amber-400" style="width:25%"></div>
+              <div class="bg-rose-500" style="width:25%"></div>
+            </div>
+            <div id="bmiMarker" class="absolute -top-1 h-4 w-1.5 rounded-full bg-slate-900 dark:bg-white shadow transition-all duration-700 hidden" style="left:0"></div>
+            <div class="flex justify-between text-[10px] text-slate-400 mt-1 num"><span>15</span><span>18.5</span><span>25</span><span>30</span><span>35</span></div>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-2" id="bmiIdeal"></p>
+        </div>
+
+        <ul id="adviceList" class="space-y-2.5"></ul>
+      </section>
+
+      <!-- 履歴 -->
+      <section class="md:col-span-2 pop rounded-3xl p-5 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-bold tracking-tight">記録履歴</h2>
+          <span class="text-xs text-slate-400" id="historyCount"></span>
+        </div>
+        <ul id="historyList" class="divide-y divide-slate-100 dark:divide-white/5 max-h-[26rem] overflow-y-auto no-scrollbar -mx-1"></ul>
+      </section>
+    </div>
+  </main>
+
+  <!-- 追加ボタン (FAB) -->
+  <button id="fab" class="fixed right-5 z-30 h-14 pl-5 pr-6 rounded-2xl bg-gradient-to-br from-indigo-600 to-fuchsia-600 text-white font-semibold shadow-xl shadow-indigo-600/40 flex items-center gap-2 active:scale-95 transition"
+          style="bottom: calc(1.25rem + var(--safe-bottom))">
+    <i data-lucide="plus" class="h-5 w-5"></i>記録する
+  </button>
+
+  <!-- オーバーレイ -->
+  <div id="overlay" class="fixed inset-0 z-40 bg-black/40 opacity-0 pointer-events-none fade"></div>
+
+  <!-- 入力シート -->
+  <div id="entrySheet" class="sheet fixed inset-x-0 bottom-0 z-50 translate-y-full md:inset-auto md:left-1/2 md:top-1/2 md:bottom-auto md:w-[26rem] md:-translate-x-1/2 md:-translate-y-1/2 md:hidden">
+    <form id="entryForm" class="mx-auto max-w-lg rounded-t-3xl md:rounded-3xl bg-white dark:bg-[#131a2a] p-5 shadow-2xl border border-slate-200 dark:border-white/10"
+          style="padding-bottom: calc(1.25rem + var(--safe-bottom))">
+      <div class="mx-auto h-1.5 w-10 rounded-full bg-slate-200 dark:bg-white/10 mb-4 md:hidden"></div>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold" id="entryTitle">今日の記録</h3>
+        <button type="button" data-close class="h-9 w-9 grid place-items-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5"><i data-lucide="x" class="h-5 w-5"></i></button>
+      </div>
+      <div class="space-y-3">
+        <label class="block">
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">日付</span>
+          <input type="date" id="fDate" required class="mt-1 w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </label>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="block">
+            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">体重 (kg)</span>
+            <input type="number" id="fWeight" inputmode="decimal" step="0.1" min="20" max="300" required placeholder="65.0"
+                   class="mt-1 w-full h-14 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-2xl font-bold num focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </label>
+          <label class="block">
+            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">体脂肪率 (%)</span>
+            <input type="number" id="fFat" inputmode="decimal" step="0.1" min="1" max="70" placeholder="任意"
+                   class="mt-1 w-full h-14 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-2xl font-bold num focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </label>
+        </div>
+        <label class="block">
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">メモ</span>
+          <input type="text" id="fMemo" maxlength="100" placeholder="例: 飲み会の翌日、よく眠れた"
+                 class="mt-1 w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </label>
+        <p class="text-[11px] text-slate-400">同じ日付の記録がある場合は上書きされます。</p>
+      </div>
+      <button type="submit" class="mt-5 w-full h-12 rounded-xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 text-white font-semibold shadow-lg shadow-indigo-600/30 active:scale-[.98] transition flex items-center justify-center gap-2">
+        <i data-lucide="check" class="h-5 w-5"></i>保存
+      </button>
+    </form>
+  </div>
+
+  <!-- 設定シート -->
+  <div id="settingsSheet" class="sheet fixed inset-x-0 bottom-0 z-50 translate-y-full md:inset-auto md:left-1/2 md:top-1/2 md:bottom-auto md:w-[28rem] md:-translate-x-1/2 md:-translate-y-1/2 md:hidden">
+    <form id="settingsForm" class="mx-auto max-w-lg max-h-[88vh] overflow-y-auto rounded-t-3xl md:rounded-3xl bg-white dark:bg-[#131a2a] p-5 shadow-2xl border border-slate-200 dark:border-white/10"
+          style="padding-bottom: calc(1.25rem + var(--safe-bottom))">
+      <div class="mx-auto h-1.5 w-10 rounded-full bg-slate-200 dark:bg-white/10 mb-4 md:hidden"></div>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold">設定</h3>
+        <button type="button" data-close class="h-9 w-9 grid place-items-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5"><i data-lucide="x" class="h-5 w-5"></i></button>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <label class="block col-span-2">
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">身長 (cm)</span>
+          <input type="number" id="sHeight" inputmode="decimal" step="0.1" min="100" max="250" placeholder="170"
+                 class="mt-1 w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 num focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </label>
+        <label class="block">
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">目標体重 (kg)</span>
+          <input type="number" id="sGoal" inputmode="decimal" step="0.1" min="20" max="300" placeholder="60.0"
+                 class="mt-1 w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 num focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </label>
+        <label class="block">
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">開始体重 (kg)</span>
+          <input type="number" id="sStart" inputmode="decimal" step="0.1" min="20" max="300" placeholder="自動"
+                 class="mt-1 w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 num focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </label>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-2">開始体重を空欄にすると、最初の記録が自動で使われます。</p>
+      <button type="submit" class="mt-4 w-full h-12 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold active:scale-[.98] transition">設定を保存</button>
+
+      <div class="mt-6 pt-5 border-t border-slate-100 dark:border-white/5">
+        <h4 class="font-semibold text-sm mb-1 flex items-center gap-2"><i data-lucide="smartphone" class="h-4 w-4"></i>体重計アプリから取り込み</h4>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+          AiLink / Google Fit などから書き出した CSV を読み込めます。「日付」「体重」「体脂肪」を含む列を自動判別します
+          (Google Takeout の Fit「Daily activity metrics.csv」の <code>Average weight (kg)</code> にも対応)。
+        </p>
+        <div class="grid grid-cols-3 gap-2">
+          <label class="h-11 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5">
+            <i data-lucide="upload" class="h-4 w-4"></i>CSV読込
+            <input type="file" id="importFile" accept=".csv,.txt,.json,text/csv,application/json" class="hidden" />
+          </label>
+          <button type="button" id="btnExportCsv" class="h-11 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-slate-50 dark:hover:bg-white/5">
+            <i data-lucide="download" class="h-4 w-4"></i>CSV出力
+          </button>
+          <button type="button" id="btnDemo" class="h-11 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-slate-50 dark:hover:bg-white/5">
+            <i data-lucide="flask-conical" class="h-4 w-4"></i>デモ
+          </button>
+        </div>
+        <button type="button" id="btnClear" class="mt-3 w-full h-10 rounded-xl text-xs font-semibold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10">すべての記録を削除</button>
+      </div>
+
+      <div class="mt-4 rounded-xl p-3 bg-indigo-50 dark:bg-indigo-500/10 text-[11px] text-indigo-700 dark:text-indigo-300 leading-relaxed">
+        <b>ホーム画面に追加 (Android Chrome):</b> 右上の「⋮」→「ホーム画面に追加」で、アプリのように全画面で起動できます。データはこの端末のブラウザ内にのみ保存されます。
+      </div>
+    </form>
+  </div>
+
+  <!-- トースト -->
+  <div id="toast" class="fixed left-1/2 -translate-x-1/2 z-[60] px-4 py-2.5 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-sm font-medium shadow-xl opacity-0 pointer-events-none fade"
+       style="top: calc(4.5rem + var(--safe-top))"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ========== ストレージ ========== */
+  const KEY_ENTRIES = 'wl.entries.v1';
+  const KEY_SETTINGS = 'wl.settings.v1';
+
+  const load = (k, fallback) => {
+    try { const v = JSON.parse(localStorage.getItem(k)); return v ?? fallback; } catch { return fallback; }
+  };
+  const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { toast('保存に失敗しました'); } };
+
+  let entries = load(KEY_ENTRIES, []);
+  let settings = Object.assign({ height: null, goal: null, startWeight: null, theme: null, showFat: true, range: '30' }, load(KEY_SETTINGS, {}));
+
+  const persist = () => { entries.sort((a, b) => a.date.localeCompare(b.date)); save(KEY_ENTRIES, entries); };
+  const persistSettings = () => save(KEY_SETTINGS, settings);
+
+  /* ========== ユーティリティ ========== */
+  const $ = (id) => document.getElementById(id);
+  const pad = (n) => String(n).padStart(2, '0');
+  const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const todayISO = () => toISO(new Date());
+  const parseISO = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const daysBetween = (a, b) => Math.round((parseISO(b) - parseISO(a)) / 86400000);
+  const fmt = (n, d = 1) => (n == null || isNaN(n)) ? '--' : Number(n).toFixed(d);
+  const signed = (n, d = 1) => (n > 0 ? '+' : n < 0 ? '−' : '±') + Math.abs(n).toFixed(d);
+  const shortDate = (s) => { const d = parseISO(s); return `${d.getMonth() + 1}/${d.getDate()}`; };
+  const wd = ['日', '月', '火', '水', '木', '金', '土'];
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const icons = () => window.lucide && lucide.createIcons();
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $('toast'); t.textContent = msg;
+    t.style.opacity = 1; clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => (t.style.opacity = 0), 2200);
+  }
+
+  /* ========== テーマ ========== */
+  function applyTheme() {
+    const dark = settings.theme ? settings.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.classList.toggle('dark', dark);
+    $('metaTheme').setAttribute('content', dark ? '#0b0f1a' : '#f8fafc');
+  }
+  $('btnTheme').onclick = () => {
+    settings.theme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+    persistSettings(); applyTheme(); renderChart();
+  };
+
+  /* ========== 計算 ========== */
+  const sorted = () => [...entries].sort((a, b) => a.date.localeCompare(b.date));
+  const startWeight = () => settings.startWeight ?? (sorted()[0]?.weight ?? null);
+  const bmiOf = (w) => settings.height ? w / Math.pow(settings.height / 100, 2) : null;
+
+  // 最小二乗法による1日あたりの変化量 (直近 n 日)
+  function slopePerDay(days = 14) {
+    const s = sorted(); if (s.length < 2) return null;
+    const last = s[s.length - 1].date;
+    const pts = s.filter((e) => daysBetween(e.date, last) <= days).map((e) => [daysBetween(s[0].date, e.date), e.weight]);
+    if (pts.length < 3) return null;
+    const n = pts.length, mx = pts.reduce((a, p) => a + p[0], 0) / n, my = pts.reduce((a, p) => a + p[1], 0) / n;
+    const num = pts.reduce((a, p) => a + (p[0] - mx) * (p[1] - my), 0);
+    const den = pts.reduce((a, p) => a + (p[0] - mx) ** 2, 0);
+    return den ? num / den : null;
+  }
+
+  function avgInWindow(fromDaysAgo, toDaysAgo) {
+    const s = sorted(); if (!s.length) return null;
+    const last = s[s.length - 1].date;
+    const xs = s.filter((e) => { const d = daysBetween(e.date, last); return d >= toDaysAgo && d < fromDaysAgo; }).map((e) => e.weight);
+    return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
+  }
+
+  /* ========== 描画: カード ========== */
+  function renderCards() {
+    const s = sorted();
+    const cur = s[s.length - 1];
+    const prev = s[s.length - 2];
+    const start = startWeight();
+    const goal = settings.goal;
+
+    $('todayLabel').textContent = (() => { const d = new Date(); return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 (${wd[d.getDay()]})`; })();
+    $('heroWeight').textContent = cur ? fmt(cur.weight) : '--';
+    $('cardCurrent').textContent = cur ? fmt(cur.weight) : '--';
+    $('cardStart').textContent = fmt(start);
+    $('cardStartDate').textContent = settings.startWeight != null ? '手動設定' : (s[0] ? `${shortDate(s[0].date)} から` : ' ');
+    $('cardGoal').textContent = fmt(goal);
+
+    // 前回比
+    const sub = $('cardCurrentSub');
+    if (cur && prev) {
+      const d = cur.weight - prev.weight;
+      sub.className = 'text-[11px] mt-0.5 font-semibold ' + (d < 0 ? 'text-emerald-500' : d > 0 ? 'text-rose-500' : 'text-slate-400');
+      sub.textContent = `前回比 ${signed(d)} kg`;
+    } else { sub.className = 'text-[11px] mt-0.5 text-slate-400'; sub.textContent = cur ? shortDate(cur.date) : ' '; }
+
+    // ヒーロー差分
+    const hd = $('heroDelta');
+    if (cur && start != null) {
+      const d = cur.weight - start;
+      hd.innerHTML = `<i data-lucide="${d <= 0 ? 'arrow-down-right' : 'arrow-up-right'}" class="h-4 w-4"></i>開始から ${signed(d)} kg`;
+    } else hd.textContent = cur ? '' : '右下の「記録する」から始めましょう';
+
+    // 目標まで & 進捗
+    let pct = null;
+    if (cur && goal != null) {
+      const remain = cur.weight - goal;
+      $('cardRemain').textContent = remain <= 0 ? '0.0' : fmt(remain);
+      $('cardGoalSub').textContent = settings.height ? `BMI ${fmt(bmiOf(goal))}` : ' ';
+      if (start != null && start !== goal) pct = Math.max(0, Math.min(100, ((start - cur.weight) / (start - goal)) * 100));
+      if (remain <= 0) pct = 100;
+    } else {
+      $('cardRemain').textContent = '--';
+      $('cardGoalSub').textContent = goal == null ? '設定で入力' : ' ';
+    }
+    $('progressPct').textContent = pct == null ? '--%' : `${Math.round(pct)}%`;
+    $('ring').style.strokeDashoffset = 326.73 * (1 - (pct ?? 0) / 100);
+    $('remainBar').style.width = `${pct ?? 0}%`;
+
+    // 到達予測
+    const slope = slopePerDay(21);
+    const eta = $('heroEta');
+    if (cur && goal != null && slope != null && cur.weight > goal && slope < -0.005) {
+      const days = Math.ceil((cur.weight - goal) / -slope);
+      const d = new Date(); d.setDate(d.getDate() + days);
+      eta.textContent = days < 1000 ? `このペースなら ${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} 頃に目標達成（約${days}日）` : '';
+    } else eta.textContent = '';
+  }
+
+  /* ========== 描画: グラフ ========== */
+  let chart;
+  function renderChart() {
+    const all = sorted();
+    let data = all;
+    if (settings.range !== 'all' && all.length) {
+      const n = Number(settings.range);
+      const last = all[all.length - 1].date;
+      data = all.filter((e) => daysBetween(e.date, last) < n);
+    }
+
+    document.querySelectorAll('#rangeTabs button').forEach((b) => {
+      const on = b.dataset.range === settings.range;
+      b.className = 'h-7 px-3 rounded-full transition ' + (on ? 'bg-white dark:bg-white/15 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400');
+    });
+    const fb = $('btnFat');
+    fb.classList.toggle('bg-amber-50', settings.showFat);
+    fb.classList.toggle('dark:bg-amber-400/10', settings.showFat);
+    fb.classList.toggle('opacity-50', !settings.showFat);
+
+    $('chartEmpty').classList.toggle('hidden', data.length > 0);
+    if (data.length) {
+      const w = data.map((e) => e.weight);
+      $('chartSummary').textContent = `${shortDate(data[0].date)} – ${shortDate(data[data.length - 1].date)} ・ 最小 ${fmt(Math.min(...w))} / 最大 ${fmt(Math.max(...w))} kg`;
+    } else $('chartSummary').textContent = ' ';
+
+    const dark = document.documentElement.classList.contains('dark');
+    const grid = dark ? 'rgba(255,255,255,.06)' : 'rgba(15,23,42,.06)';
+    const tick = dark ? '#94a3b8' : '#64748b';
+    const hasFat = settings.showFat && data.some((e) => e.fat != null);
+
+    const labels = data.map((e) => shortDate(e.date));
+    const datasets = [
+      {
+        label: '体重',
+        data: data.map((e) => e.weight),
+        yAxisID: 'y',
+        borderColor: (ctx) => {
+          const { chart } = ctx; const { ctx: c, chartArea } = chart; if (!chartArea) return '#6366f1';
+          const g = c.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+          g.addColorStop(0, '#6366f1'); g.addColorStop(1, '#d946ef'); return g;
+        },
+        backgroundColor: (ctx) => {
+          const { chart } = ctx; const { ctx: c, chartArea } = chart; if (!chartArea) return 'transparent';
+          const g = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          g.addColorStop(0, dark ? 'rgba(129,140,248,.40)' : 'rgba(99,102,241,.28)');
+          g.addColorStop(1, 'rgba(99,102,241,0)'); return g;
+        },
+        fill: true, tension: 0.42, cubicInterpolationMode: 'monotone',
+        borderWidth: 3, pointRadius: data.length > 40 ? 0 : 3.5, pointHoverRadius: 6,
+        pointBackgroundColor: dark ? '#0b0f1a' : '#fff', pointBorderColor: '#8b5cf6', pointBorderWidth: 2,
+        order: 1,
+      },
+    ];
+    if (settings.goal != null && data.length) {
+      datasets.push({
+        label: '目標', data: data.map(() => settings.goal), yAxisID: 'y',
+        borderColor: '#10b981', borderDash: [6, 6], borderWidth: 2, pointRadius: 0, pointHoverRadius: 0, fill: false, order: 3,
+      });
+    }
+    if (hasFat) {
+      datasets.push({
+        label: '体脂肪率', data: data.map((e) => e.fat ?? null), yAxisID: 'y1', spanGaps: true,
+        borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderWidth: 2, tension: 0.4, cubicInterpolationMode: 'monotone',
+        pointRadius: data.length > 40 ? 0 : 2.5, fill: false, order: 2,
+      });
+    }
+
+    // Y軸の範囲 (目標線が必ず入るように)
+    const ws = data.map((e) => e.weight).concat(settings.goal != null ? [settings.goal] : []);
+    const yMin = ws.length ? Math.floor(Math.min(...ws) - 1) : undefined;
+    const yMax = ws.length ? Math.ceil(Math.max(...ws) + 1) : undefined;
+
+    const cfg = {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        animation: { duration: 600, easing: 'easeOutCubic' },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: dark ? '#1e293b' : '#0f172a', padding: 10, cornerRadius: 10, displayColors: true, boxPadding: 4,
+            titleFont: { family: 'Inter', weight: '600' }, bodyFont: { family: 'Inter' },
+            callbacks: {
+              title: (items) => { const e = data[items[0].dataIndex]; const d = parseISO(e.date); return `${d.getMonth() + 1}月${d.getDate()}日 (${wd[d.getDay()]})`; },
+              label: (it) => it.dataset.label === '体脂肪率' ? ` 体脂肪率 ${fmt(it.raw)} %` : ` ${it.dataset.label} ${fmt(it.raw)} kg`,
+              afterBody: (items) => { const m = data[items[0].dataIndex].memo; return m ? `📝 ${m}` : ''; },
+            },
+          },
+        },
+        scales: {
+          x: { grid: { display: false }, border: { display: false }, ticks: { color: tick, maxRotation: 0, autoSkip: true, maxTicksLimit: 7, font: { family: 'Inter', size: 11 } } },
+          y: { position: 'left', min: yMin, max: yMax, grid: { color: grid }, border: { display: false }, ticks: { color: tick, font: { family: 'Inter', size: 11 }, callback: (v) => v + 'kg' } },
+          y1: { display: hasFat, position: 'right', grid: { display: false }, border: { display: false }, ticks: { color: '#f59e0b', font: { family: 'Inter', size: 11 }, callback: (v) => v + '%' } },
+        },
+      },
+    };
+
+    if (chart) chart.destroy();
+    chart = new Chart($('chart'), cfg);
+  }
+
+  $('rangeTabs').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    settings.range = b.dataset.range; persistSettings(); renderChart();
+  });
+  $('btnFat').onclick = () => { settings.showFat = !settings.showFat; persistSettings(); renderChart(); };
+
+  /* ========== AI 健康アドバイス (ルールベース) ========== */
+  const TONE = {
+    good: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-200 border-emerald-100 dark:border-emerald-500/20',
+    info: 'bg-sky-50 text-sky-800 dark:bg-sky-500/10 dark:text-sky-200 border-sky-100 dark:border-sky-500/20',
+    warn: 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-200 border-amber-100 dark:border-amber-500/20',
+    alert: 'bg-rose-50 text-rose-800 dark:bg-rose-500/10 dark:text-rose-200 border-rose-100 dark:border-rose-500/20',
+  };
+
+  function generateAdvice() {
+    const s = sorted();
+    const out = [];
+    const add = (tone, icon, title, body) => out.push({ tone, icon, title, body });
+
+    if (!s.length) {
+      add('info', 'hand', 'ようこそ！', 'まずは今日の体重を記録しましょう。毎朝、起床・トイレ後の同じタイミングで測るのがおすすめです。');
+      if (!settings.height || settings.goal == null) add('info', 'settings-2', '初期設定', '右上の設定から身長と目標体重を入力すると、BMIや達成率が表示されます。');
+      return out;
+    }
+
+    const cur = s[s.length - 1];
+    const goal = settings.goal;
+
+    // 記録の鮮度
+    const gap = daysBetween(cur.date, todayISO());
+    if (gap >= 3) add('warn', 'calendar-clock', `${gap}日間記録がありません`, '体重は毎日測ることで「一時的な変動」と「本当の変化」を見分けられます。今日から再開しましょう。');
+
+    // 目標達成
+    if (goal != null && cur.weight <= goal) {
+      add('good', 'trophy', '目標達成おめでとうございます！🎉', '今後は ±1kg の範囲をキープする「維持期」です。食事量を少しずつ戻し、リバウンドを防ぎましょう。');
+    }
+
+    // 直近3回のトレンド
+    const last3 = s.slice(-3);
+    if (last3.length >= 2) {
+      const span = Math.max(1, daysBetween(last3[0].date, cur.date));
+      const diff = cur.weight - last3[0].weight;
+      const perDay = diff / span;
+      const dayDiff = s.length >= 2 ? cur.weight - s[s.length - 2].weight : 0;
+
+      if (dayDiff >= 1.0) {
+        add('warn', 'droplets', '一時的な増加です。水分を多めに取りましょう', `前回から ${signed(dayDiff)}kg。急な増加の多くは塩分・糖質によるむくみ（水分）です。水やお茶をこまめに飲み、カリウムの多い野菜・海藻で排出を促しましょう。`);
+      } else if (perDay <= -0.35) {
+        add('alert', 'alert-triangle', '減少ペースが速すぎます', `直近${span}日で ${signed(diff)}kg。急激な減量は筋肉や水分が落ちているサインかもしれません。たんぱく質（体重×1.2〜1.6g/日）と水分をしっかり摂りましょう。`);
+      } else if (diff <= -0.1) {
+        add('good', 'party-popper', '順調です！', `直近${span}日で ${signed(diff)}kg。この調子で、今の食事と生活リズムを続けましょう。`);
+      } else if (Math.abs(diff) < 0.1) {
+        add('info', 'minus', '横ばいです', '数日の停滞はよくあることです。焦らず、睡眠時間と歩数を意識してみましょう。');
+      } else if (diff > 0) {
+        add('warn', 'cup-soda', 'やや増加傾向です', `直近${span}日で ${signed(diff)}kg。夜遅い食事や間食、アルコールを振り返ってみましょう。水分を多めに取り、塩分は控えめに。`);
+      }
+    }
+
+    // 週平均の比較 (日々の変動をならした本質的なトレンド)
+    const thisWeek = avgInWindow(7, 0);
+    const lastWeek = avgInWindow(14, 7);
+    if (thisWeek != null && lastWeek != null) {
+      const d = thisWeek - lastWeek;
+      if (d <= -0.2) add('good', 'trending-down', '週平均が下がっています', `直近7日の平均 ${fmt(thisWeek)}kg（前週比 ${signed(d)}kg）。日々の上下より、この平均値の変化が本当の成果です。`);
+      else if (Math.abs(d) < 0.2 && s.length >= 14) add('info', 'repeat', '停滞期かもしれません', `週平均の変化は ${signed(d)}kg。体が変化に適応する時期です。1日だけ食事量を少し増やす「チートデイ」や、筋トレの追加が効果的な場合があります。`);
+      else if (d >= 0.3) add('warn', 'trending-up', '週平均が増えています', `前週比 ${signed(d)}kg。まずは1日の食事を記録して、摂取量を「見える化」してみましょう。`);
+    }
+
+    // 体脂肪と体重の関係
+    const fats = s.filter((e) => e.fat != null);
+    if (fats.length >= 2) {
+      const a = fats[Math.max(0, fats.length - 7)], b = fats[fats.length - 1];
+      const dw = b.weight - a.weight, df = b.fat - a.fat;
+      if (dw < -0.3 && df > 0.3) add('warn', 'dumbbell', '筋肉量の低下に注意', `体重は減っていますが体脂肪率が ${signed(df)}% 上昇。スクワットなどの筋トレと、たんぱく質の摂取を増やしましょう。`);
+      else if (df <= -0.5) add('good', 'flame', '体脂肪が減っています', `体脂肪率 ${signed(df)}%。脂肪がしっかり燃えています。`);
+    }
+
+    // BMI
+    const bmi = bmiOf(cur.weight);
+    if (bmi != null) {
+      if (bmi < 18.5) add('alert', 'heart-pulse', '低体重の範囲です', 'BMI 18.5 未満です。これ以上の減量は控え、栄養バランスの良い食事を心がけましょう。');
+      else if (bmi >= 25 && goal == null) add('info', 'target', '目標を決めましょう', '設定で目標体重を入力すると、達成率と到達予測日を表示できます。');
+    } else {
+      add('info', 'ruler', '身長を設定してください', '設定で身長を入力すると BMI を自動計算します。');
+    }
+
+    // 目標までのペース
+    const slope = slopePerDay(21);
+    if (goal != null && cur.weight > goal && slope != null) {
+      const perMonth = slope * 30;
+      const safe = cur.weight * 0.05; // 1ヶ月に体重の5%以内が目安
+      if (perMonth > -0.1 && out.every((o) => o.tone !== 'warn')) {
+        add('info', 'footprints', 'あと一押し', '1日の歩数を +2,000歩（約20分の散歩）増やすと、月に約0.5kgの脂肪燃焼に相当します。');
+      } else if (-perMonth > safe) {
+        add('warn', 'gauge', 'ペースを少し落としましょう', `現在のペースは月 ${fmt(-perMonth)}kg。健康的な目安は月に体重の5%（約${fmt(safe)}kg）以内です。`);
+      }
+    }
+
+    // メモからのヒント
+    if (cur.memo && /飲み|酒|ビール|外食|焼肉|ラーメン/.test(cur.memo)) {
+      add('info', 'glass-water', '食べ過ぎた翌日は', '翌日の増加の多くは水分です。水を多めに飲み、次の食事を軽めにすれば2〜3日で戻ります。');
+    }
+
+    return out.slice(0, 5);
+  }
+
+  function renderAdvice() {
+    const s = sorted(); const cur = s[s.length - 1];
+    const bmi = cur ? bmiOf(cur.weight) : null;
+    const badge = $('bmiBadge'); const marker = $('bmiMarker');
+    if (bmi != null) {
+      $('bmiValue').textContent = fmt(bmi);
+      const [label, cls] =
+        bmi < 18.5 ? ['低体重', 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300'] :
+        bmi < 25   ? ['普通体重', 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'] :
+        bmi < 30   ? ['肥満 (1度)', 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'] :
+                     ['肥満 (2度以上)', 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'];
+      badge.textContent = label; badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full ' + cls;
+      marker.classList.remove('hidden');
+      marker.style.left = `calc(${Math.max(0, Math.min(100, ((bmi - 15) / 20) * 100))}% - 3px)`;
+      const h = settings.height / 100;
+      $('bmiIdeal').textContent = `標準体重 (BMI 22): ${fmt(22 * h * h)}kg ・ 普通体重の範囲: ${fmt(18.5 * h * h)}〜${fmt(24.9 * h * h)}kg`;
+    } else {
+      $('bmiValue').textContent = '--';
+      badge.textContent = settings.height ? '記録なし' : '身長未設定';
+      badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-200 dark:bg-white/10';
+      marker.classList.add('hidden'); $('bmiIdeal').textContent = '';
+    }
+
+    $('adviceList').innerHTML = generateAdvice().map((a, i) => `
+      <li class="pop rounded-2xl border p-3.5 flex gap-3 ${TONE[a.tone]}" style="animation-delay:${i * 60}ms">
+        <i data-lucide="${a.icon}" class="h-5 w-5 shrink-0 mt-0.5"></i>
+        <div class="min-w-0"><p class="font-semibold text-sm">${esc(a.title)}</p><p class="text-[13px] leading-relaxed opacity-90 mt-0.5">${esc(a.body)}</p></div>
+      </li>`).join('');
+  }
+
+  /* ========== 描画: 履歴 ========== */
+  function renderHistory() {
+    const s = sorted().reverse();
+    $('historyCount').textContent = s.length ? `${s.length}件` : '';
+    if (!s.length) { $('historyList').innerHTML = '<li class="py-8 text-center text-sm text-slate-400">まだ記録がありません</li>'; return; }
+    $('historyList').innerHTML = s.slice(0, 200).map((e, i) => {
+      const prev = s[i + 1];
+      const d = prev ? e.weight - prev.weight : null;
+      const dc = d == null ? '' : d < 0 ? 'text-emerald-500' : d > 0 ? 'text-rose-500' : 'text-slate-400';
+      const dt = parseISO(e.date);
+      return `
+      <li class="group flex items-center gap-3 px-1 py-2.5">
+        <button data-edit="${e.date}" class="flex-1 min-w-0 flex items-center gap-3 text-left">
+          <div class="h-10 w-10 shrink-0 rounded-xl bg-slate-100 dark:bg-white/5 grid place-items-center leading-none">
+            <div class="text-center"><p class="text-[10px] text-slate-400">${dt.getMonth() + 1}月</p><p class="text-sm font-bold num">${dt.getDate()}</p></div>
+          </div>
+          <div class="min-w-0">
+            <p class="font-semibold num">${fmt(e.weight)} <span class="text-xs text-slate-400 font-normal">kg</span>
+              ${e.fat != null ? `<span class="ml-1.5 text-xs text-amber-500 font-medium">${fmt(e.fat)}%</span>` : ''}</p>
+            <p class="text-xs text-slate-400 truncate">${e.memo ? esc(e.memo) : wd[dt.getDay()] + '曜日'}</p>
+          </div>
+        </button>
+        <span class="text-xs font-semibold num ${dc}">${d == null ? '' : signed(d)}</span>
+        <button data-del="${e.date}" class="h-8 w-8 grid place-items-center rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10" aria-label="削除">
+          <i data-lucide="trash-2" class="h-4 w-4"></i>
+        </button>
+      </li>`;
+    }).join('');
+  }
+
+  $('historyList').addEventListener('click', (e) => {
+    const del = e.target.closest('[data-del]');
+    const edit = e.target.closest('[data-edit]');
+    if (del) {
+      if (!confirm(`${del.dataset.del} の記録を削除しますか？`)) return;
+      entries = entries.filter((x) => x.date !== del.dataset.del); persist(); renderAll(); toast('削除しました');
+    } else if (edit) {
+      openEntry(entries.find((x) => x.date === edit.dataset.edit));
+    }
+  });
+
+  /* ========== シート (モーダル) ========== */
+  let openSheetEl = null;
+  function openSheet(el) {
+    openSheetEl = el;
+    el.classList.remove('md:hidden');
+    requestAnimationFrame(() => el.classList.remove('translate-y-full'));
+    $('overlay').classList.remove('pointer-events-none'); $('overlay').style.opacity = 1;
+  }
+  function closeSheet() {
+    if (!openSheetEl) return;
+    const el = openSheetEl; openSheetEl = null;
+    el.classList.add('translate-y-full');
+    setTimeout(() => el.classList.add('md:hidden'), 300);
+    $('overlay').classList.add('pointer-events-none'); $('overlay').style.opacity = 0;
+    document.activeElement?.blur();
+  }
+  $('overlay').onclick = closeSheet;
+  document.querySelectorAll('[data-close]').forEach((b) => (b.onclick = closeSheet));
+  document.addEventListener('keydown', (e) => e.key === 'Escape' && closeSheet());
+
+  function openEntry(entry) {
+    const last = sorted().slice(-1)[0];
+    $('entryTitle').textContent = entry ? '記録を編集' : '今日の記録';
+    $('fDate').value = entry?.date ?? todayISO();
+    $('fDate').max = todayISO();
+    $('fWeight').value = entry?.weight ?? '';
+    $('fWeight').placeholder = last ? fmt(last.weight) : '65.0';
+    $('fFat').value = entry?.fat ?? '';
+    $('fMemo').value = entry?.memo ?? '';
+    openSheet($('entrySheet'));
+    setTimeout(() => $('fWeight').focus(), 320);
+  }
+  $('fab').onclick = () => openEntry(entries.find((x) => x.date === todayISO()));
+
+  $('entryForm').onsubmit = (e) => {
+    e.preventDefault();
+    const date = $('fDate').value;
+    const weight = parseFloat($('fWeight').value);
+    const fatRaw = $('fFat').value.trim();
+    if (!date || isNaN(weight)) return;
+    const rec = { date, weight: Math.round(weight * 10) / 10, fat: fatRaw === '' ? null : Math.round(parseFloat(fatRaw) * 10) / 10, memo: $('fMemo').value.trim() };
+    const i = entries.findIndex((x) => x.date === date);
+    if (i >= 0) entries[i] = rec; else entries.push(rec);
+    persist(); closeSheet(); renderAll();
+    if (navigator.vibrate) navigator.vibrate(12);
+    toast(i >= 0 ? '記録を更新しました' : '記録しました ✓');
+  };
+
+  $('btnSettings').onclick = () => {
+    $('sHeight').value = settings.height ?? '';
+    $('sGoal').value = settings.goal ?? '';
+    $('sStart').value = settings.startWeight ?? '';
+    openSheet($('settingsSheet'));
+  };
+  $('settingsForm').onsubmit = (e) => {
+    e.preventDefault();
+    const num = (id) => { const v = parseFloat($(id).value); return isNaN(v) ? null : v; };
+    settings.height = num('sHeight'); settings.goal = num('sGoal'); settings.startWeight = num('sStart');
+    persistSettings(); closeSheet(); renderAll(); toast('設定を保存しました');
+  };
+
+  /* ========== CSV 取り込み / 書き出し ========== */
+  function parseCSV(text) {
+    const rows = []; let row = [], cell = '', q = false;
+    text = text.replace(/^﻿/, '');
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) {
+        if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+        else if (c === '"') q = false; else cell += c;
+      } else if (c === '"') q = true;
+      else if (c === ',' || c === '\t' || c === ';') { row.push(cell); cell = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+      else cell += c;
+    }
+    if (cell || row.length) { row.push(cell); rows.push(row); }
+    return rows.filter((r) => r.some((c) => c.trim() !== ''));
+  }
+
+  function normDate(v) {
+    if (!v) return null;
+    const m = String(v).trim().match(/(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})/);
+    if (m) return `${m[1]}-${pad(m[2])}-${pad(m[3])}`;
+    const t = Date.parse(v); return isNaN(t) ? null : toISO(new Date(t));
+  }
+
+  function importRows(rows) {
+    const header = rows[0].map((h) => h.trim().toLowerCase());
+    const find = (re, not) => header.findIndex((h) => re.test(h) && !(not && not.test(h)));
+    const iDate = find(/date|日付|日時|time|測定日/);
+    let iW = find(/average weight|平均体重/);
+    if (iW < 0) iW = find(/weight|体重/, /fat|脂肪|max|min|最大|最小|goal|目標/);
+    const iF = find(/fat|体脂肪/, /mass|量|kg/);
+    const iM = find(/memo|note|メモ|備考/);
+    if (iDate < 0 || iW < 0) throw new Error('「日付」と「体重」の列が見つかりませんでした');
+
+    let n = 0; const map = new Map(entries.map((e) => [e.date, e]));
+    for (const r of rows.slice(1)) {
+      const date = normDate(r[iDate]); let w = parseFloat(String(r[iW] ?? '').replace(/[^\d.]/g, ''));
+      if (!date || isNaN(w) || w <= 0) continue;
+      if (w > 300) w = w / 1000; // g → kg
+      const f = iF >= 0 ? parseFloat(String(r[iF] ?? '').replace(/[^\d.]/g, '')) : NaN;
+      const old = map.get(date) || {};
+      map.set(date, { date, weight: Math.round(w * 10) / 10, fat: isNaN(f) ? (old.fat ?? null) : Math.round(f * 10) / 10, memo: iM >= 0 ? (r[iM] || old.memo || '') : (old.memo || '') });
+      n++;
+    }
+    entries = [...map.values()]; persist();
+    return n;
+  }
+
+  $('importFile').onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    try {
+      const text = await file.text();
+      let n;
+      if (/^\s*[\[{]/.test(text)) {
+        const j = JSON.parse(text);
+        const list = Array.isArray(j) ? j : (j.entries || []);
+        if (j.settings) Object.assign(settings, j.settings), persistSettings();
+        const map = new Map(entries.map((x) => [x.date, x]));
+        list.forEach((x) => { const d = normDate(x.date); if (d && x.weight) map.set(d, { date: d, weight: +x.weight, fat: x.fat ?? null, memo: x.memo || '' }); });
+        entries = [...map.values()]; persist(); n = list.length;
+      } else n = importRows(parseCSV(text));
+      closeSheet(); renderAll(); toast(`${n}件の記録を取り込みました`);
+    } catch (err) { toast('取り込み失敗: ' + err.message); }
+    e.target.value = '';
+  };
+
+  $('btnExportCsv').onclick = () => {
+    const lines = ['date,weight_kg,body_fat_pct,memo', ...sorted().map((e) => `${e.date},${e.weight},${e.fat ?? ''},"${(e.memo || '').replace(/"/g, '""')}"`)];
+    const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `weight-log-${todayISO()}.csv`; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+
+  $('btnDemo').onclick = () => {
+    if (entries.length && !confirm('デモデータで現在の記録を置き換えますか？')) return;
+    const out = []; let w = 72.4, f = 26.5; const d = new Date(); d.setDate(d.getDate() - 59);
+    for (let i = 0; i < 60; i++) {
+      if (Math.random() > 0.12) {
+        w += -0.07 + (Math.random() - 0.5) * 0.6; f += -0.03 + (Math.random() - 0.5) * 0.3;
+        out.push({ date: toISO(d), weight: Math.round(w * 10) / 10, fat: Math.round(f * 10) / 10, memo: i % 11 === 5 ? '飲み会' : '' });
+      }
+      d.setDate(d.getDate() + 1);
+    }
+    entries = out; settings.height = settings.height ?? 170; settings.goal = settings.goal ?? 66;
+    persist(); persistSettings(); closeSheet(); renderAll(); toast('デモデータを読み込みました');
+  };
+
+  $('btnClear').onclick = () => {
+    if (!confirm('すべての記録を削除します。元に戻せません。よろしいですか？')) return;
+    entries = []; persist(); closeSheet(); renderAll(); toast('削除しました');
+  };
+
+  /* ========== ホーム画面アイコン / マニフェスト ========== */
+  function setupPWA() {
+    const c = document.createElement('canvas'); c.width = c.height = 512;
+    const x = c.getContext('2d');
+    const g = x.createLinearGradient(0, 0, 512, 512); g.addColorStop(0, '#4f46e5'); g.addColorStop(1, '#c026d3');
+    x.fillStyle = g; x.beginPath(); x.roundRect ? x.roundRect(0, 0, 512, 512, 112) : x.rect(0, 0, 512, 512); x.fill();
+    x.strokeStyle = '#fff'; x.lineWidth = 34; x.lineCap = 'round'; x.lineJoin = 'round';
+    x.beginPath(); x.moveTo(96, 200); x.lineTo(196, 290); x.lineTo(276, 230); x.lineTo(416, 350); x.stroke();
+    x.fillStyle = '#fff'; x.beginPath(); x.arc(416, 350, 30, 0, Math.PI * 2); x.fill();
+    const png = c.toDataURL('image/png');
+    $('favicon').href = png; $('touchIcon').href = png;
+
+    const manifest = {
+      name: '体重ログ', short_name: '体重ログ', start_url: location.href.split('#')[0], scope: location.href.replace(/[^/]*$/, ''),
+      display: 'standalone', orientation: 'portrait', background_color: '#0b0f1a', theme_color: '#0b0f1a',
+      icons: [{ src: png, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }],
+    };
+    const link = document.createElement('link'); link.rel = 'manifest';
+    link.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest));
+    document.head.appendChild(link);
+  }
+
+  /* ========== 起動 ========== */
+  function renderAll() { renderCards(); renderChart(); renderAdvice(); renderHistory(); icons(); }
+
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { if (!settings.theme) { applyTheme(); renderChart(); } });
+  applyTheme();
+  setupPWA();
+  if (window.Chart) { Chart.defaults.font.family = 'Inter, "Noto Sans JP", sans-serif'; }
+  renderAll();
+})();
+</script>
+</body>
+</html>
