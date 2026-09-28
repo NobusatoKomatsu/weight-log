@@ -564,19 +564,19 @@
       datasets.push({
         label: '体脂肪率', unit: '%', data: data.map((e) => e.fat ?? null), yAxisID: 'y', spanGaps: true,
         borderColor: (ctx) => {
-          const { chart } = ctx; const { ctx: c, chartArea } = chart; if (!chartArea) return '#6366f1';
+          const { chart } = ctx; const { ctx: c, chartArea } = chart; if (!chartArea) return '#f97316';
           const g = c.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
-          g.addColorStop(0, '#6366f1'); g.addColorStop(1, '#d946ef'); return g;
+          g.addColorStop(0, '#fb923c'); g.addColorStop(1, '#ec4899'); return g;
         },
         backgroundColor: (ctx) => {
           const { chart } = ctx; const { ctx: c, chartArea } = chart; if (!chartArea) return 'transparent';
           const g = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-          g.addColorStop(0, dark ? 'rgba(129,140,248,.40)' : 'rgba(99,102,241,.28)');
-          g.addColorStop(1, 'rgba(99,102,241,0)'); return g;
+          g.addColorStop(0, dark ? 'rgba(251,146,60,.38)' : 'rgba(249,115,22,.25)');
+          g.addColorStop(1, 'rgba(249,115,22,0)'); return g;
         },
         fill: true, tension: 0.42, cubicInterpolationMode: 'monotone',
-        borderWidth: 3, pointRadius: many ? 0 : 3.5, pointHoverRadius: 6,
-        pointBackgroundColor: dark ? '#0b0f1a' : '#fff', pointBorderColor: '#8b5cf6', pointBorderWidth: 2, order: 1,
+        borderWidth: 3.5, pointRadius: many ? 0 : 4, pointHoverRadius: 7,
+        pointBackgroundColor: dark ? '#0b0f1a' : '#fff', pointBorderColor: '#f97316', pointBorderWidth: 2.5, order: 1,
       });
       if (settings.goalFat != null) {
         datasets.push({
