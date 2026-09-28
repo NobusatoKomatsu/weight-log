@@ -2,10 +2,14 @@
 
 個人向け体重管理ダッシュボード
 
-## ▶ アプリを開く
+## ▶ Androidアプリ（Health Connect 自動連携）
+
+**[weight-log.apk をダウンロード](https://github.com/NobusatoKomatsu/weight-log/releases/download/app/weight-log.apk)**
+
+AiLink などが Health Connect に書き込んだ体重・体脂肪率を、アプリを開くたびに自動で取り込みます。
+
+## ▶ ブラウザ版
 
 **https://nobusatokomatsu.github.io/weight-log/**
 
-上のリンクをタップするとアプリが開きます。ブラウザのメニューから「ホーム画面に追加」すると、アプリのように使えます。
-
-記録したデータはスマホのブラウザ内にだけ保存され、GitHub には送られません。
+記録したデータは端末内にだけ保存され、GitHub や外部のサーバーには送られません。

@@ -80,6 +80,18 @@
 
   <main class="mx-auto max-w-5xl px-4 pt-5 space-y-5" style="padding-bottom: calc(6.5rem + var(--safe-bottom))">
 
+    <!-- Health Connect 連携バナー (Androidアプリ版のみ) -->
+    <section id="hcBanner" class="hidden pop rounded-2xl p-4 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm flex items-center gap-3">
+      <div class="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br from-sky-400 to-indigo-500 grid place-items-center">
+        <i data-lucide="heart-pulse" class="h-5 w-5 text-white"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="font-semibold text-sm">Health Connect と連携</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400" id="hcBannerText">AiLink の体重を自動で取り込みます</p>
+      </div>
+      <button id="hcConnect" class="h-9 px-4 shrink-0 rounded-xl bg-indigo-600 text-white text-xs font-semibold active:scale-95 transition">連携する</button>
+    </section>
+
     <!-- 進捗ヒーロー -->
     <section class="pop rounded-3xl p-5 bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-xl shadow-indigo-600/20 relative overflow-hidden">
       <div class="absolute -right-10 -bottom-16 h-48 w-48 rounded-full bg-white/10"></div>
@@ -285,6 +297,22 @@
       <p class="text-[11px] text-slate-400 mt-2">開始体重を空欄にすると、最初の記録が自動で使われます。</p>
       <button type="submit" class="mt-4 w-full h-12 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold active:scale-[.98] transition">設定を保存</button>
 
+      <div id="hcSettings" class="hidden mt-6 pt-5 border-t border-slate-100 dark:border-white/5">
+        <h4 class="font-semibold text-sm mb-1 flex items-center gap-2"><i data-lucide="heart-pulse" class="h-4 w-4"></i>Health Connect</h4>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+          AiLink などが Health Connect に書き込んだ体重・体脂肪率を、アプリを開くたびに自動で取り込みます。同じ日に手入力した記録がある場合は手入力を優先します。
+        </p>
+        <p class="text-[11px] mb-3" id="hcStatus">未確認</p>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" id="hcSyncBtn" class="h-11 rounded-xl bg-indigo-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5">
+            <i data-lucide="refresh-cw" class="h-4 w-4"></i>今すぐ同期
+          </button>
+          <button type="button" id="hcManageBtn" class="h-11 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-slate-50 dark:hover:bg-white/5">
+            <i data-lucide="external-link" class="h-4 w-4"></i>Health Connect
+          </button>
+        </div>
+      </div>
+
       <div class="mt-6 pt-5 border-t border-slate-100 dark:border-white/5">
         <h4 class="font-semibold text-sm mb-1 flex items-center gap-2"><i data-lucide="smartphone" class="h-4 w-4"></i>体重計アプリから取り込み</h4>
         <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
@@ -361,6 +389,7 @@
     const dark = settings.theme ? settings.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
     document.documentElement.classList.toggle('dark', dark);
     $('metaTheme').setAttribute('content', dark ? '#0b0f1a' : '#f8fafc');
+    try { window.HealthBridge && window.HealthBridge.setTheme(dark); } catch {}
   }
   $('btnTheme').onclick = () => {
     settings.theme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
@@ -705,7 +734,8 @@
           </div>
           <div class="min-w-0">
             <p class="font-semibold num">${fmt(e.weight)} <span class="text-xs text-slate-400 font-normal">kg</span>
-              ${e.fat != null ? `<span class="ml-1.5 text-xs text-amber-500 font-medium">${fmt(e.fat)}%</span>` : ''}</p>
+              ${e.fat != null ? `<span class="ml-1.5 text-xs text-amber-500 font-medium">${fmt(e.fat)}%</span>` : ''}
+              ${e.src === 'hc' ? '<span class="ml-1 align-middle text-[10px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300 font-semibold">自動</span>' : ''}</p>
             <p class="text-xs text-slate-400 truncate">${e.memo ? esc(e.memo) : wd[dt.getDay()] + '曜日'}</p>
           </div>
         </button>
@@ -770,6 +800,8 @@
     if (!date || isNaN(weight)) return;
     const rec = { date, weight: Math.round(weight * 10) / 10, fat: fatRaw === '' ? null : Math.round(parseFloat(fatRaw) * 10) / 10, memo: $('fMemo').value.trim() };
     const i = entries.findIndex((x) => x.date === date);
+    const old = entries[i];
+    if (old?.src === 'hc' && old.weight === rec.weight && (old.fat ?? null) === rec.fat) rec.src = 'hc';
     if (i >= 0) entries[i] = rec; else entries.push(rec);
     persist(); closeSheet(); renderAll();
     if (navigator.vibrate) navigator.vibrate(12);
@@ -858,6 +890,7 @@
 
   $('btnExportCsv').onclick = () => {
     const lines = ['date,weight_kg,body_fat_pct,memo', ...sorted().map((e) => `${e.date},${e.weight},${e.fat ?? ''},"${(e.memo || '').replace(/"/g, '""')}"`)];
+    if (window.HealthBridge) { window.HealthBridge.saveFile(`weight-log-${todayISO()}.csv`, lines.join('\n')); return; }
     const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `weight-log-${todayISO()}.csv`; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
@@ -881,6 +914,64 @@
     if (!confirm('すべての記録を削除します。元に戻せません。よろしいですか？')) return;
     entries = []; persist(); closeSheet(); renderAll(); toast('削除しました');
   };
+
+  /* ========== Health Connect 連携 (Androidアプリ版のみ) ========== */
+  const HC = window.HealthBridge || null;
+  const hcSync = (interactive) => { if (!HC) return; $('hcStatus').textContent = '同期中…'; HC.sync(!!interactive); };
+
+  window.onHealthConnect = (res) => {
+    const banner = $('hcBanner'), st = $('hcStatus');
+    const showBanner = (msg, btn) => { banner.classList.remove('hidden'); $('hcBannerText').textContent = msg; $('hcConnect').textContent = btn; };
+    switch (res.status) {
+      case 'ok': {
+        banner.classList.add('hidden');
+        const map = new Map(entries.map((e) => [e.date, e]));
+        let n = 0;
+        for (const r of res.records || []) {
+          const old = map.get(r.date);
+          if (old && old.src !== 'hc') continue; // 手入力を優先
+          const fat = r.fat ?? old?.fat ?? null;
+          if (old && old.weight === r.weight && old.fat === fat) continue;
+          map.set(r.date, { date: r.date, weight: r.weight, fat, memo: old?.memo || '', src: 'hc' });
+          n++;
+        }
+        if (n) { entries = [...map.values()]; persist(); renderAll(); }
+        st.className = 'text-[11px] mb-3 text-emerald-600 dark:text-emerald-400';
+        st.textContent = `連携中 ・ 最終同期 ${new Date().toLocaleString('ja-JP')}（${(res.records || []).length}日分を確認）` +
+          (res.history ? '' : ' ※過去データは連携前30日分まで');
+        if (n) toast(`Health Connect から ${n}件 取り込みました`);
+        else if (res.interactive) toast('新しいデータはありません');
+        break;
+      }
+      case 'need_permission':
+        showBanner('AiLink の体重を自動で取り込みます', '連携する');
+        st.className = 'text-[11px] mb-3 text-slate-500'; st.textContent = '未連携';
+        break;
+      case 'denied':
+        showBanner('アクセスが許可されませんでした', 'もう一度');
+        st.className = 'text-[11px] mb-3 text-rose-500'; st.textContent = '「体重」と「体脂肪率」の読み取りが許可されていません';
+        break;
+      case 'update_required':
+        showBanner('Health Connect の更新が必要です', '更新する');
+        st.className = 'text-[11px] mb-3 text-amber-500'; st.textContent = 'Health Connect の更新が必要です';
+        break;
+      case 'unavailable':
+        st.className = 'text-[11px] mb-3 text-slate-500'; st.textContent = 'この端末では Health Connect を利用できません';
+        break;
+      default:
+        st.className = 'text-[11px] mb-3 text-rose-500'; st.textContent = '同期エラー: ' + (res.message || '');
+        toast('同期に失敗しました');
+    }
+    icons();
+  };
+
+  if (HC) {
+    $('hcSettings').classList.remove('hidden');
+    $('hcConnect').onclick = () => hcSync(true);
+    $('hcSyncBtn').onclick = () => hcSync(true);
+    $('hcManageBtn').onclick = () => HC.openHealthConnect();
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) hcSync(false); });
+  }
 
   /* ========== ホーム画面アイコン / マニフェスト ========== */
   function setupPWA() {
@@ -912,6 +1003,7 @@
   setupPWA();
   if (window.Chart) { Chart.defaults.font.family = 'Inter, "Noto Sans JP", sans-serif'; }
   renderAll();
+  hcSync(false);
 })();
 </script>
 </body>
