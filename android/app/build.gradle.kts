@@ -7,7 +7,7 @@ val buildNumber = (System.getenv("VERSION_CODE") ?: "1").toInt()
 
 android {
     namespace = "io.github.nobusatokomatsu.weightlog"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "io.github.nobusatokomatsu.weightlog"
