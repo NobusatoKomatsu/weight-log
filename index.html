@@ -71,8 +71,8 @@
           <i data-lucide="sun" class="h-5 w-5 hidden dark:block"></i>
           <i data-lucide="moon" class="h-5 w-5 dark:hidden"></i>
         </button>
-        <button id="btnSettings" class="h-10 w-10 grid place-items-center rounded-xl hover:bg-slate-200/60 dark:hover:bg-white/5" aria-label="設定">
-          <i data-lucide="settings-2" class="h-5 w-5"></i>
+        <button id="btnSettings" class="h-10 pl-3 pr-3.5 flex items-center gap-1.5 rounded-xl bg-slate-200/70 dark:bg-white/10 text-sm font-semibold hover:bg-slate-300/70 dark:hover:bg-white/15" aria-label="設定">
+          <i data-lucide="settings" class="h-5 w-5"></i>設定
         </button>
       </div>
     </div>
@@ -81,7 +81,7 @@
   <main class="mx-auto max-w-5xl px-4 pt-5 space-y-5" style="padding-bottom: calc(6.5rem + var(--safe-bottom))">
 
     <!-- Health Connect 連携バナー (Androidアプリ版のみ) -->
-    <section id="hcBanner" class="hidden pop rounded-2xl p-4 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm flex items-center gap-3">
+    <div id="hcBanner" hidden><section class="pop rounded-2xl p-4 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm flex items-center gap-3">
       <div class="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br from-sky-400 to-indigo-500 grid place-items-center">
         <i data-lucide="heart-pulse" class="h-5 w-5 text-white"></i>
       </div>
@@ -90,7 +90,7 @@
         <p class="text-xs text-slate-500 dark:text-slate-400" id="hcBannerText">AiLink の体重を自動で取り込みます</p>
       </div>
       <button id="hcConnect" class="h-9 px-4 shrink-0 rounded-xl bg-indigo-600 text-white text-xs font-semibold active:scale-95 transition">連携する</button>
-    </section>
+    </section></div>
 
     <!-- 進捗ヒーロー (体脂肪率) -->
     <section class="pop rounded-3xl p-5 bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-xl shadow-indigo-600/20 relative overflow-hidden">
@@ -956,10 +956,10 @@
 
   window.onHealthConnect = (res) => {
     const banner = $('hcBanner'), st = $('hcStatus');
-    const showBanner = (msg, btn) => { banner.classList.remove('hidden'); $('hcBannerText').textContent = msg; $('hcConnect').textContent = btn; };
+    const showBanner = (msg, btn) => { banner.hidden = false; $('hcBannerText').textContent = msg; $('hcConnect').textContent = btn; };
     switch (res.status) {
       case 'ok': {
-        banner.classList.add('hidden');
+        banner.hidden = true;
         const map = new Map(entries.map((e) => [e.date, e]));
         let n = 0;
         for (const r of res.records || []) {

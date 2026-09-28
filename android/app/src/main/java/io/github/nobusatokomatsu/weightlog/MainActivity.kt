@@ -134,7 +134,8 @@ class MainActivity : ComponentActivity() {
             }
         })
 
-        if (savedInstanceState == null) web.loadUrl(APP_URL) else web.restoreState(savedInstanceState)
+        // 毎回最新のページを読み込む (GitHub Pages の HTML キャッシュを回避)
+        if (savedInstanceState == null) web.loadUrl("$APP_URL?t=${System.currentTimeMillis()}") else web.restoreState(savedInstanceState)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
