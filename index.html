@@ -406,7 +406,7 @@
     const s = sorted(); if (s.length < 2) return null;
     const last = s[s.length - 1].date;
     const pts = s.filter((e) => daysBetween(e.date, last) <= days).map((e) => [daysBetween(s[0].date, e.date), e.weight]);
-    if (pts.length < 3) return null;
+    if (pts.length < 3 || pts[pts.length - 1][0] - pts[0][0] < 7) return null; // 1週間分たまるまでは予測しない
     const n = pts.length, mx = pts.reduce((a, p) => a + p[0], 0) / n, my = pts.reduce((a, p) => a + p[1], 0) / n;
     const num = pts.reduce((a, p) => a + (p[0] - mx) * (p[1] - my), 0);
     const den = pts.reduce((a, p) => a + (p[0] - mx) ** 2, 0);
@@ -801,7 +801,7 @@
     const rec = { date, weight: Math.round(weight * 10) / 10, fat: fatRaw === '' ? null : Math.round(parseFloat(fatRaw) * 10) / 10, memo: $('fMemo').value.trim() };
     const i = entries.findIndex((x) => x.date === date);
     const old = entries[i];
-    if (old?.src === 'hc' && old.weight === rec.weight && (old.fat ?? null) === rec.fat) rec.src = 'hc';
+    if (old?.src === 'hc' && old.weight === rec.weight) rec.src = 'hc'; // 体脂肪率・メモだけの追記なら自動連携を維持
     if (i >= 0) entries[i] = rec; else entries.push(rec);
     persist(); closeSheet(); renderAll();
     if (navigator.vibrate) navigator.vibrate(12);
