@@ -118,6 +118,9 @@
       </div>
     </section>
 
+    <!-- 前日のメモ (食べ過ぎ・飲みすぎの振り返り) -->
+    <div id="prevMemo" hidden></div>
+
     <!-- 体脂肪率カード -->
     <section class="grid grid-cols-2 md:grid-cols-4 gap-3">
       <div class="pop rounded-2xl p-4 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm">
@@ -266,11 +269,13 @@
                    class="mt-1 w-full h-14 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-2xl font-bold num focus:outline-none focus:ring-2 focus:ring-indigo-500" />
           </label>
         </div>
+        <div id="fPrevMemo" hidden class="rounded-xl px-3.5 py-2.5 text-[13px] leading-relaxed"></div>
         <label class="block">
-          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">メモ</span>
-          <input type="text" id="fMemo" maxlength="100" placeholder="例: 飲み会の翌日、よく眠れた"
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">メモ（食べた物・飲んだ物など）</span>
+          <input type="text" id="fMemo" maxlength="100" placeholder="例: ラーメン、ビール3杯"
                  class="mt-1 w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </label>
+        <div id="memoTags" class="flex flex-wrap gap-1.5 -mt-1"></div>
         <p class="text-[11px] text-slate-400">同じ日付の記録がある場合は上書きされます。</p>
       </div>
       <button type="submit" class="mt-5 w-full h-12 rounded-xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 text-white font-semibold shadow-lg shadow-indigo-600/30 active:scale-[.98] transition flex items-center justify-center gap-2">
@@ -455,6 +460,81 @@
 
   const deltaClass = (d) => d < 0 ? 'text-emerald-500' : d > 0 ? 'text-rose-500' : 'text-slate-400';
 
+  /* ========== 食べ過ぎ・飲みすぎメモ ========== */
+  const MEMO_TAGS = ['🍺飲みすぎ', '🍜食べ過ぎ', '🍰甘い物', '🌙夜遅い食事', '🧂塩分多め', '🍖外食'];
+  const OVEREAT_RE = /飲みすぎ|飲み過ぎ|食べすぎ|食べ過ぎ|飲み会|酒|ビール|ワイン|ハイボール|焼酎|外食|焼肉|ラーメン|揚げ物|甘い|ケーキ|お菓子|夜食|夜遅|塩分|🍺|🍜|🍰|🌙|🧂|🍖/;
+  const isOverEat = (memo) => !!memo && OVEREAT_RE.test(memo);
+  const dayLabel = (date, base) => { const d = daysBetween(date, base); return d === 1 ? '昨日' : d === 2 ? '一昨日' : shortDate(date); };
+
+  // date より前で一番新しい「メモ付きの記録」(3日以内)
+  function prevMemoEntry(date) {
+    const prev = sorted().filter((e) => e.date < date).pop();
+    return prev && prev.memo && daysBetween(prev.date, date) <= 3 ? prev : null;
+  }
+
+  // 「前の記録 → 今日」の変化を文章に
+  function changeText(prev, cur) {
+    const parts = [];
+    if (cur?.fat != null && prev.fat != null) parts.push(`体脂肪率 <b class="${deltaClass(cur.fat - prev.fat)}">${signed(cur.fat - prev.fat)}%</b>`);
+    if (cur?.weight != null && prev.weight != null) parts.push(`体重 <b class="${deltaClass(cur.weight - prev.weight)}">${signed(cur.weight - prev.weight)}kg</b>`);
+    return parts.join(' ・ ');
+  }
+
+  function renderPrevMemo() {
+    const box = $('prevMemo');
+    const today = todayISO();
+    const prev = prevMemoEntry(today);
+    if (!prev) { box.hidden = true; return; }
+    const cur = entries.find((e) => e.date === today);
+    const over = isOverEat(prev.memo);
+    const ch = cur ? changeText(prev, cur) : '';
+    const up = cur && ((cur.fat != null && prev.fat != null && cur.fat > prev.fat) || (cur.weight != null && prev.weight != null && cur.weight > prev.weight));
+    const tone = over ? 'bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-400/25' : 'bg-white border-slate-200/80 dark:bg-white/[.04] dark:border-white/5';
+    let note;
+    if (!cur) note = over ? '今日の測定で影響をチェックしましょう。水分を多めに、食事は軽めに。' : '今日の測定で前日との違いをチェックしましょう。';
+    else if (over && up) note = '前日の食べ過ぎ・飲みすぎが出ています。今日は水分多め・塩分控えめで2〜3日かけて戻しましょう。';
+    else if (over) note = '食べ過ぎても数値は増えていません。この調子で今日は控えめに！';
+    else note = '';
+    box.innerHTML = `
+      <section class="pop rounded-2xl p-4 border shadow-sm ${tone}">
+        <div class="flex items-start gap-3">
+          <div class="h-9 w-9 shrink-0 rounded-xl grid place-items-center ${over ? 'bg-amber-400 text-white' : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-300'}">
+            <i data-lucide="${over ? 'alert-triangle' : 'notebook-pen'}" class="h-4 w-4"></i>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-semibold ${over ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-slate-400'}">${dayLabel(prev.date, today)}のメモ${over ? ' ・ 食べ過ぎ・飲みすぎ注意' : ''}</p>
+            <p class="font-semibold mt-0.5 break-words">${esc(prev.memo)}</p>
+            ${ch ? `<p class="text-sm mt-1.5 num">今日: ${ch}</p>` : ''}
+            ${note ? `<p class="text-xs mt-1 text-slate-600 dark:text-slate-300">${note}</p>` : ''}
+          </div>
+        </div>
+      </section>`;
+    box.hidden = false;
+  }
+
+  // 記録フォーム: 選んだ日付の前日メモを表示
+  function renderFormPrevMemo() {
+    const el = $('fPrevMemo');
+    const date = $('fDate').value;
+    const prev = date ? prevMemoEntry(date) : null;
+    if (!prev) { el.hidden = true; return; }
+    const over = isOverEat(prev.memo);
+    el.className = 'rounded-xl px-3.5 py-2.5 text-[13px] leading-relaxed ' +
+      (over ? 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-200' : 'bg-slate-50 text-slate-600 dark:bg-white/5 dark:text-slate-300');
+    el.innerHTML = `${over ? '⚠️ ' : '📝 '}<b>${dayLabel(prev.date, date)}のメモ:</b> ${esc(prev.memo)}`;
+    el.hidden = false;
+  }
+
+  $('memoTags').innerHTML = MEMO_TAGS.map((t) =>
+    `<button type="button" data-tag="${t}" class="h-8 px-2.5 rounded-full text-xs font-medium border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 active:scale-95 transition">${t}</button>`).join('');
+  $('memoTags').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-tag]'); if (!b) return;
+    const m = $('fMemo'), tag = b.dataset.tag;
+    if (m.value.includes(tag)) m.value = m.value.replace(tag, '').replace(/^[、\s]+|[、\s]+$/g, '').replace(/、、/g, '、');
+    else m.value = m.value ? `${m.value}、${tag}` : tag;
+  });
+  $('fDate').addEventListener('change', renderFormPrevMemo);
+
   /* ========== 描画: カード ========== */
   function renderCards() {
     $('todayLabel').textContent = (() => { const d = new Date(); return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 (${wd[d.getDay()]})`; })();
@@ -575,8 +655,11 @@
           g.addColorStop(1, 'rgba(249,115,22,0)'); return g;
         },
         fill: true, tension: 0.42, cubicInterpolationMode: 'monotone',
-        borderWidth: 3.5, pointRadius: many ? 0 : 4, pointHoverRadius: 7,
-        pointBackgroundColor: dark ? '#0b0f1a' : '#fff', pointBorderColor: '#f97316', pointBorderWidth: 2.5, order: 1,
+        borderWidth: 3.5, pointHoverRadius: 7,
+        pointBackgroundColor: data.map((e) => isOverEat(e.memo) ? '#ef4444' : (dark ? '#0b0f1a' : '#fff')),
+        pointBorderColor: data.map((e) => isOverEat(e.memo) ? '#ef4444' : '#f97316'),
+        pointRadius: many ? data.map((e) => isOverEat(e.memo) ? 3.5 : 0) : data.map((e) => isOverEat(e.memo) ? 5.5 : 4),
+        pointBorderWidth: 2.5, order: 1,
       });
       if (settings.goalFat != null) {
         datasets.push({
@@ -712,7 +795,7 @@
       if (dayDiff >= 1.0) add('warn', 'cup-soda', '体重が一時的に増えています', `前回から ${signed(dayDiff)}kg。多くは塩分・糖質によるむくみ（水分）です。水やお茶をこまめに飲み、野菜・海藻でカリウムを摂りましょう。`);
       const bmi = bmiOf(cw.weight);
       if (bmi != null && bmi < 18.5) add('alert', 'heart-pulse', '低体重の範囲です', 'BMI 18.5 未満です。体脂肪を落とすより、筋肉を増やす方向（食事量を確保＋筋トレ）がおすすめです。');
-      if (cw.memo && /飲み|酒|ビール|外食|焼肉|ラーメン/.test(cw.memo)) add('info', 'glass-water', '食べ過ぎた翌日は', '翌日の増加の多くは水分です。水を多めに飲み、次の食事を軽めにすれば2〜3日で戻ります。');
+      if (isOverEat(cw.memo) || isOverEat(prevMemoEntry(todayISO())?.memo)) add('info', 'glass-water', '食べ過ぎ・飲みすぎの後は', '翌日の増加の多くは水分です。水を多めに飲み、次の食事を軽めにすれば2〜3日で戻ります。');
     }
 
     return out.slice(0, 5);
@@ -818,6 +901,7 @@
     $('fFat').placeholder = lastF ? fmt(lastF.fat) : '20.0';
     $('fWeight').value = entry?.weight ?? '';
     $('fMemo').value = entry?.memo ?? '';
+    renderFormPrevMemo();
     openSheet($('entrySheet'));
     setTimeout(() => $('fFat').focus(), 320);
   }
@@ -1034,7 +1118,7 @@
   }
 
   /* ========== 起動 ========== */
-  function renderAll() { renderCards(); renderChart(); renderAdvice(); renderHistory(); icons(); }
+  function renderAll() { renderCards(); renderPrevMemo(); renderChart(); renderAdvice(); renderHistory(); icons(); }
 
   matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { if (!settings.theme) { applyTheme(); renderChart(); } });
   applyTheme();
