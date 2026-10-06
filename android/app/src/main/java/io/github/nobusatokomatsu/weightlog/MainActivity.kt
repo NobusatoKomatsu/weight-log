@@ -41,7 +41,7 @@ import kotlin.math.roundToInt
 import kotlin.reflect.KClass
 
 /**
- * 公開中の体重ログ (GitHub Pages) を WebView で表示し、
+ * 公開中の体脂肪率 (GitHub Pages) を WebView で表示し、
  * Health Connect の体重・体脂肪率を読み取って JS 側 (window.onHealthConnect) に渡す。
  */
 class MainActivity : ComponentActivity() {

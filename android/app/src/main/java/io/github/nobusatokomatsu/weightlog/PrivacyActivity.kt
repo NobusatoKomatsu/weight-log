@@ -17,7 +17,7 @@ class PrivacyActivity : ComponentActivity() {
             textSize = 15f
             setLineSpacing(0f, 1.4f)
             text = """
-                体重ログ のデータの扱いについて
+                体脂肪率 のデータの扱いについて
 
                 ・Health Connect から「体重」と「体脂肪率」を読み取ります。
                 ・読み取ったデータはこの端末のアプリ内にだけ保存され、外部のサーバーには送信しません。

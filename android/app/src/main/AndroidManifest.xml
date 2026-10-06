@@ -11,7 +11,7 @@
     </queries>
 
     <application
-        android:label="体重ログ"
+        android:label="体脂肪率"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:theme="@style/AppTheme"

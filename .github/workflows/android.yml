@@ -42,7 +42,7 @@ jobs:
         run: |
           cp android/app/build/outputs/apk/release/app-release.apk weight-log.apk
           gh release view app >/dev/null 2>&1 || gh release create app \
-            --title "体重ログ Androidアプリ" \
+            --title "体脂肪率 Androidアプリ" \
             --notes "weight-log.apk をダウンロードしてインストールしてください。"
           gh release upload app weight-log.apk --clobber
           gh release edit app --notes "weight-log.apk をダウンロードしてインストールしてください。（ビルド ${{ github.run_number }}）"

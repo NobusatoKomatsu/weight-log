@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>体重ログ</title>
+  <title>体脂肪率</title>
   <meta name="description" content="個人向け体重管理ダッシュボード" />
   <meta name="theme-color" content="#0b0f1a" id="metaTheme" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="体重ログ" />
+  <meta name="apple-mobile-web-app-title" content="体脂肪率" />
   <link rel="icon" id="favicon" />
   <link rel="apple-touch-icon" id="touchIcon" />
 
@@ -62,7 +62,7 @@
           <i data-lucide="activity" class="h-4 w-4 text-white"></i>
         </div>
         <div class="leading-tight">
-          <p class="font-bold tracking-tight">体重ログ</p>
+          <p class="font-bold tracking-tight">体脂肪率</p>
           <p class="text-[11px] text-slate-500 dark:text-slate-400" id="todayLabel"></p>
         </div>
       </div>
@@ -1108,7 +1108,7 @@
     $('favicon').href = png; $('touchIcon').href = png;
 
     const manifest = {
-      name: '体重ログ', short_name: '体重ログ', start_url: location.href.split('#')[0], scope: location.href.replace(/[^/]*$/, ''),
+      name: '体脂肪率', short_name: '体脂肪率', start_url: location.href.split('#')[0], scope: location.href.replace(/[^/]*$/, ''),
       display: 'standalone', orientation: 'portrait', background_color: '#0b0f1a', theme_color: '#0b0f1a',
       icons: [{ src: png, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }],
     };
