@@ -10,6 +10,6 @@ AiLink などが Health Connect に書き込んだ体重・体脂肪率を、ア
 
 ## ▶ ブラウザ版
 
-**https://nobusatokomatsu.github.io/weight-log/**
+**https://sixpac.jp/**
 
 記録したデータは端末内にだけ保存され、GitHub や外部のサーバーには送られません。

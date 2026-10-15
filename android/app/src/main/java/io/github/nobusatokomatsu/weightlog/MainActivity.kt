@@ -47,8 +47,8 @@ import kotlin.reflect.KClass
 class MainActivity : ComponentActivity() {
 
     companion object {
-        const val APP_URL = "https://nobusatokomatsu.github.io/weight-log/"
-        const val APP_HOST = "nobusatokomatsu.github.io"
+        const val APP_URL = "https://sixpac.jp/"
+        val APP_HOSTS = setOf("sixpac.jp", "nobusatokomatsu.github.io")
         const val HISTORY_PERMISSION = "android.permission.health.READ_HEALTH_DATA_HISTORY"
         const val HC_PACKAGE = "com.google.android.apps.healthdata"
         const val SYNC_DAYS = 3650L
@@ -110,7 +110,7 @@ class MainActivity : ComponentActivity() {
 
         web.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                if (request.url.host == APP_HOST) return false
+                if (request.url.host in APP_HOSTS) return false
                 openExternal(request.url)
                 return true
             }
