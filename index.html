@@ -352,9 +352,12 @@
         </p>
         <div class="grid grid-cols-3 gap-2">
           <label class="h-11 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5">
-            <i data-lucide="upload" class="h-4 w-4"></i>CSV読込
+            <i data-lucide="upload" class="h-4 w-4"></i>読込
             <input type="file" id="importFile" accept=".csv,.txt,.json,text/csv,application/json" class="hidden" />
           </label>
+          <button type="button" id="btnBackup" class="col-span-3 h-11 rounded-xl bg-indigo-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5">
+            <i data-lucide="smartphone-nfc" class="h-4 w-4"></i>機種変更用バックアップ（記録＋設定）を保存
+          </button>
           <button type="button" id="btnExportCsv" class="h-11 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-slate-50 dark:hover:bg-white/5">
             <i data-lucide="download" class="h-4 w-4"></i>CSV出力
           </button>
@@ -973,16 +976,16 @@
     if (iW < 0) iW = find(/weight|体重/, /fat|脂肪|max|min|最大|最小|goal|目標/);
     const iF = find(/fat|体脂肪/, /mass|量|kg/);
     const iM = find(/memo|note|メモ|備考/);
-    if (iDate < 0 || iW < 0) throw new Error('「日付」と「体重」の列が見つかりませんでした');
+    if (iDate < 0 || (iW < 0 && iF < 0)) throw new Error('「日付」と「体重」または「体脂肪率」の列が見つかりませんでした');
 
     let n = 0; const map = new Map(entries.map((e) => [e.date, e]));
     for (const r of rows.slice(1)) {
       const date = normDate(r[iDate]); let w = parseFloat(String(r[iW] ?? '').replace(/[^\d.]/g, ''));
-      if (!date || isNaN(w) || w <= 0) continue;
-      if (w > 300) w = w / 1000; // g → kg
       const f = iF >= 0 ? parseFloat(String(r[iF] ?? '').replace(/[^\d.]/g, '')) : NaN;
+      if (!date || ((isNaN(w) || w <= 0) && isNaN(f))) continue;
+      if (w > 300) w = w / 1000; // g → kg
       const old = map.get(date) || {};
-      map.set(date, { date, weight: Math.round(w * 10) / 10, fat: isNaN(f) ? (old.fat ?? null) : Math.round(f * 10) / 10, memo: iM >= 0 ? (r[iM] || old.memo || '') : (old.memo || '') });
+      map.set(date, { date, weight: isNaN(w) || w <= 0 ? (old.weight ?? null) : Math.round(w * 10) / 10, fat: isNaN(f) ? (old.fat ?? null) : Math.round(f * 10) / 10, memo: iM >= 0 ? (r[iM] || old.memo || '') : (old.memo || '') });
       n++;
     }
     entries = [...map.values()]; persist();
@@ -997,14 +1000,25 @@
       if (/^\s*[\[{]/.test(text)) {
         const j = JSON.parse(text);
         const list = Array.isArray(j) ? j : (j.entries || []);
-        if (j.settings) Object.assign(settings, j.settings), persistSettings();
+        if (j.settings) { const { theme, ...rest } = j.settings; Object.assign(settings, rest); persistSettings(); }
         const map = new Map(entries.map((x) => [x.date, x]));
-        list.forEach((x) => { const d = normDate(x.date); if (d && x.weight) map.set(d, { date: d, weight: +x.weight, fat: x.fat ?? null, memo: x.memo || '' }); });
+        list.forEach((x) => {
+          const d = normDate(x.date);
+          if (d && (x.weight != null || x.fat != null)) map.set(d, { date: d, weight: x.weight != null ? +x.weight : null, fat: x.fat != null ? +x.fat : null, memo: x.memo || '', ...(x.src ? { src: x.src } : {}) });
+        });
         entries = [...map.values()]; persist(); n = list.length;
       } else n = importRows(parseCSV(text));
       closeSheet(); renderAll(); toast(`${n}件の記録を取り込みました`);
     } catch (err) { toast('取り込み失敗: ' + err.message); }
     e.target.value = '';
+  };
+
+  $('btnBackup').onclick = () => {
+    const json = JSON.stringify({ app: 'weight-log', version: 1, exportedAt: new Date().toISOString(), settings, entries: sorted() });
+    const name = `weight-log-backup-${todayISO()}.json`;
+    if (window.HealthBridge) { window.HealthBridge.saveFile(name, json); return; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' })); a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };
 
   $('btnExportCsv').onclick = () => {
