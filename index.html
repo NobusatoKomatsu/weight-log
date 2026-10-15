@@ -899,7 +899,9 @@
   document.querySelectorAll('[data-close]').forEach((b) => (b.onclick = closeSheet));
   document.addEventListener('keydown', (e) => e.key === 'Escape' && closeSheet());
 
+  let editingDate = null;
   function openEntry(entry) {
+    editingDate = entry?.date ?? null;
     const lastF = lastOf('fat');
     $('entryTitle').textContent = entry ? '記録を編集' : '今日の記録';
     $('fDate').value = entry?.date ?? todayISO();
@@ -922,13 +924,15 @@
     if (!date) return;
     if (fat == null && weight == null) { toast('体脂肪率か体重を入力してください'); return; }
     const rec = { date, weight, fat, memo: $('fMemo').value.trim() };
+    const moved = editingDate && editingDate !== date;
+    if (moved) entries = entries.filter((x) => x.date !== editingDate); // 日付を変えたら元の日から移動
     const i = entries.findIndex((x) => x.date === date);
     const old = entries[i];
     if (old?.src === 'hc' && old.weight === rec.weight) rec.src = 'hc'; // 体脂肪率・メモだけの追記なら自動連携を維持
     if (i >= 0) entries[i] = rec; else entries.push(rec);
     persist(); closeSheet(); renderAll();
     if (navigator.vibrate) navigator.vibrate(12);
-    toast(i >= 0 ? '記録を更新しました' : '記録しました ✓');
+    toast(moved ? `${shortDate(date)} に移動しました` : i >= 0 ? '記録を更新しました' : '記録しました ✓');
   };
 
   $('btnSettings').onclick = () => {
@@ -1074,6 +1078,17 @@
           if (old && old.weight === r.weight && old.fat === fat) continue;
           map.set(r.date, { date: r.date, weight: r.weight, fat, memo: old?.memo || '', src: 'hc' });
           n++;
+        }
+        // 以前ずれた日付で入った自動取り込みの体重を整理 (手入力の体脂肪率・メモは残す)
+        const got = new Set((res.records || []).map((r) => r.date));
+        const from = [...got].sort()[0];
+        if (from) {
+          for (const [d, e] of map) {
+            if (e.src !== 'hc' || d < from || got.has(d)) continue;
+            if (e.fat == null && !e.memo) map.delete(d);
+            else { const { src, ...rest } = e; map.set(d, { ...rest, weight: null }); }
+            n++;
+          }
         }
         if (n) { entries = [...map.values()]; persist(); renderAll(); }
         st.className = 'text-[11px] mb-3 text-emerald-600 dark:text-emerald-400';

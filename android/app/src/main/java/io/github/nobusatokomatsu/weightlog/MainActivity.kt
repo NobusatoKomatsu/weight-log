@@ -36,7 +36,6 @@ import org.json.JSONObject
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
-import java.time.ZoneOffset
 import kotlin.math.roundToInt
 import kotlin.reflect.KClass
 
@@ -174,11 +173,11 @@ class MainActivity : ComponentActivity() {
 
                 val byDate = sortedMapOf<String, JSONObject>()
                 for (r in weights) {
-                    val d = localDate(r.time, r.zoneOffset)
+                    val d = localDate(r.time)
                     if (d !in byDate) byDate[d] = JSONObject().put("date", d).put("weight", round1(r.weight.inKilograms))
                 }
                 for (r in fats) {
-                    val o = byDate[localDate(r.time, r.zoneOffset)] ?: continue
+                    val o = byDate[localDate(r.time)] ?: continue
                     if (!o.has("fat")) o.put("fat", round1(r.percentage.value))
                 }
 
@@ -208,8 +207,9 @@ class MainActivity : ComponentActivity() {
         return out
     }
 
-    private fun localDate(time: Instant, offset: ZoneOffset?): String =
-        time.atOffset(offset ?: ZoneId.systemDefault().rules.getOffset(time)).toLocalDate().toString()
+    // 測定時刻はスマホのタイムゾーン (日本時間) で日付にする。
+    // AiLink は時刻を UTC で書き込むことがあり、記録側のオフセットを使うと朝の測定が前日扱いになる。
+    private fun localDate(time: Instant): String = time.atZone(ZoneId.systemDefault()).toLocalDate().toString()
 
     private fun round1(v: Double): Double = (v * 10).roundToInt() / 10.0
 
