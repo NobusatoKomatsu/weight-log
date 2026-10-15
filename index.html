@@ -705,7 +705,11 @@
           },
         },
         scales: {
-          x: { grid: { display: false }, border: { display: false }, ticks: { color: tick, maxRotation: 0, autoSkip: true, maxTicksLimit: 7, font: { family: 'Inter', size: 11 } } },
+          x: { grid: { display: false }, border: { display: false }, ticks: {
+            color: tick, maxRotation: 0, autoSkip: false, font: { family: 'Inter', size: 11 },
+            // 最新の日付を必ず表示し、そこから等間隔にさかのぼって間引く
+            callback: (v, i) => { const n = labels.length, step = Math.max(1, Math.ceil(n / 6)); return (n - 1 - i) % step === 0 ? labels[i] : null; },
+          } },
           y: { display: hasFat, position: 'left', min: yMin, max: yMax, grid: { color: grid }, border: { display: false }, ticks: { color: tick, font: { family: 'Inter', size: 11 }, callback: (v) => v + '%' } },
           y1: { display: hasWeight, position: 'right', grid: { display: !hasFat, color: grid }, border: { display: false }, ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 }, callback: (v) => v + 'kg' } },
         },
