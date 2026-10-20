@@ -331,9 +331,10 @@
       <div id="hcSettings" class="hidden mt-6 pt-5 border-t border-slate-100 dark:border-white/5">
         <h4 class="font-semibold text-sm mb-1 flex items-center gap-2"><i data-lucide="heart-pulse" class="h-4 w-4"></i>Health Connect</h4>
         <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
-          AiLink などが Health Connect に書き込んだ体重（体脂肪率があればそれも）を、アプリを開くたびに自動で取り込みます。同じ日に手入力した記録がある場合は手入力を優先します。
+          AiLink などが Health Connect に書き込んだ体重を、アプリを開くたびに自動で取り込みます。手入力した体脂肪率は Health Connect に書き込むので、Health・ウェリーなど他のアプリでも見られます。
         </p>
-        <p class="text-[11px] mb-3" id="hcStatus">未確認</p>
+        <p class="text-[11px] mb-1" id="hcStatus">未確認</p>
+        <p class="text-[11px] mb-3 text-slate-500 dark:text-slate-400" id="hcFatStatus"></p>
         <div class="grid grid-cols-2 gap-2">
           <button type="button" id="hcSyncBtn" class="h-11 rounded-xl bg-indigo-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5">
             <i data-lucide="refresh-cw" class="h-4 w-4"></i>今すぐ同期
@@ -394,7 +395,7 @@
   let entries = load(KEY_ENTRIES, []);
   let settings = Object.assign({ height: null, goal: null, startWeight: null, goalFat: null, startFat: null, theme: null, showWeight: true, range: '30' }, load(KEY_SETTINGS, {}));
 
-  const persist = () => { entries.sort((a, b) => a.date.localeCompare(b.date)); save(KEY_ENTRIES, entries); };
+  const persist = () => { entries.sort((a, b) => a.date.localeCompare(b.date)); save(KEY_ENTRIES, entries); setTimeout(() => hcPushFat(false), 0); };
   const persistSettings = () => save(KEY_SETTINGS, settings);
 
   /* ========== ユーティリティ ========== */
@@ -930,7 +931,7 @@
     const old = entries[i];
     if (old?.src === 'hc' && old.weight === rec.weight) rec.src = 'hc'; // 体脂肪率・メモだけの追記なら自動連携を維持
     if (i >= 0) entries[i] = rec; else entries.push(rec);
-    persist(); closeSheet(); renderAll();
+    persist(); closeSheet(); renderAll(); hcPushFat(true);
     if (navigator.vibrate) navigator.vibrate(12);
     toast(moved ? `${shortDate(date)} に移動しました` : i >= 0 ? '記録を更新しました' : '記録しました ✓');
   };
@@ -1058,11 +1059,52 @@
 
   /* ========== Health Connect 連携 (Androidアプリ版のみ) ========== */
   const HC = window.HealthBridge || null;
+  let hcBannerAction = () => hcSync(true);
+
+  /* 手入力した体脂肪率を Health Connect に書き込む (Health・ウェリーなど他のアプリにも届ける) */
+  const KEY_HC_FAT = 'wl.hcFatWritten.v1';
+  let hcFatWritten = load(KEY_HC_FAT, {});
+  let hcPushing = false;
+  function hcPushFat(interactive) {
+    const hc = window.HealthBridge;
+    if (!hc || !hc.writeFat) return; // ブラウザ版・古いアプリでは何もしない
+    if (hcPushing && !interactive) return; // 送信中は自動の送信をまとめる
+    const want = {};
+    for (const e of entries) if (e.fat != null) want[e.date] = e.fat;
+    const diffs = [];
+    for (const [d, f] of Object.entries(want)) if (hcFatWritten[d] !== f) diffs.push({ date: d, fat: f });
+    for (const d of Object.keys(hcFatWritten)) if (!(d in want)) diffs.push({ date: d, fat: null });
+    if (diffs.length) { hcPushing = true; hc.writeFat(JSON.stringify(diffs.slice(0, 500)), !!interactive); }
+  }
+  const fatStatus = () => { const n = Object.keys(hcFatWritten).length; return n ? `体脂肪率 ${n}日分を Health Connect に書き込み済み` : ''; };
+  window.onHealthConnectWrite = (res) => {
+    hcPushing = false;
+    const banner = $('hcBanner');
+    if (res.status === 'ok') {
+      for (const it of res.items || []) { if (it.fat == null) delete hcFatWritten[it.date]; else hcFatWritten[it.date] = it.fat; }
+      save(KEY_HC_FAT, hcFatWritten);
+      if (hcBannerAction.isWrite) banner.hidden = true;
+      $('hcFatStatus').textContent = fatStatus();
+      if (res.interactive && res.written > 1) toast(`体脂肪率 ${res.written}日分を Health・ウェリーなどに共有しました`);
+      hcPushFat(false); // 500件を超えた残りがあれば続けて送る
+    } else if (res.status === 'need_write_permission' || res.status === 'write_denied') {
+      banner.hidden = false;
+      hcBannerAction = Object.assign(() => hcPushFat(true), { isWrite: true });
+      $('hcBannerText').textContent = res.status === 'write_denied'
+        ? '体脂肪率の書き込みが許可されませんでした'
+        : '体脂肪率を Health・ウェリーにも共有します';
+      $('hcConnect').textContent = res.status === 'write_denied' ? 'もう一度' : '許可する';
+    } else if (res.status === 'error') {
+      toast('体脂肪率の書き込みに失敗しました');
+      $('hcFatStatus').textContent = '書き込みエラー: ' + (res.message || '');
+    }
+    icons();
+  };
   const hcSync = (interactive) => { if (!HC) return; $('hcStatus').textContent = '同期中…'; HC.sync(!!interactive); };
 
   window.onHealthConnect = (res) => {
     const banner = $('hcBanner'), st = $('hcStatus');
-    const showBanner = (msg, btn) => { banner.hidden = false; $('hcBannerText').textContent = msg; $('hcConnect').textContent = btn; };
+    const showBanner = (msg, btn) => { banner.hidden = false; hcBannerAction = () => hcSync(true); $('hcBannerText').textContent = msg; $('hcConnect').textContent = btn; };
     switch (res.status) {
       case 'ok': {
         banner.hidden = true;
@@ -1092,6 +1134,8 @@
         }
         if (n) { entries = [...map.values()]; persist(); renderAll(); }
         st.className = 'text-[11px] mb-3 text-emerald-600 dark:text-emerald-400';
+        $('hcFatStatus').textContent = fatStatus();
+        hcPushFat(false);
         st.textContent = `連携中 ・ 最終同期 ${new Date().toLocaleString('ja-JP')}（${(res.records || []).length}日分を確認）` +
           (res.history ? '' : ' ※過去データは連携前30日分まで');
         if (n) toast(`Health Connect から ${n}件 取り込みました`);
@@ -1122,7 +1166,7 @@
 
   if (HC) {
     $('hcSettings').classList.remove('hidden');
-    $('hcConnect').onclick = () => hcSync(true);
+    $('hcConnect').onclick = () => hcBannerAction();
     $('hcSyncBtn').onclick = () => hcSync(true);
     $('hcManageBtn').onclick = () => HC.openHealthConnect();
     document.addEventListener('visibilitychange', () => { if (!document.hidden) hcSync(false); });

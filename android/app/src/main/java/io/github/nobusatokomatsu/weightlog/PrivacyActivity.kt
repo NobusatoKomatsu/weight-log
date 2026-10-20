@@ -20,8 +20,8 @@ class PrivacyActivity : ComponentActivity() {
                 体脂肪率 のデータの扱いについて
 
                 ・Health Connect から「体重」と「体脂肪率」を読み取ります。
-                ・読み取ったデータはこの端末のアプリ内にだけ保存され、外部のサーバーには送信しません。
-                ・書き込みは行いません。
+                ・手入力した体脂肪率を Health Connect に書き込み、他の健康アプリでも見られるようにします。
+                ・データはこの端末の中だけで扱い、外部のサーバーには送信しません。
                 ・連携は Android の設定 → Health Connect からいつでも解除できます。
             """.trimIndent()
         }

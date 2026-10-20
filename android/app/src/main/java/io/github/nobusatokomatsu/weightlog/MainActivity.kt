@@ -27,6 +27,8 @@ import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.WeightRecord
+import androidx.health.connect.client.records.metadata.Metadata
+import androidx.health.connect.client.units.Percentage
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.lifecycle.lifecycleScope
@@ -35,6 +37,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.math.roundToInt
 import kotlin.reflect.KClass
@@ -42,6 +45,7 @@ import kotlin.reflect.KClass
 /**
  * 公開中の体脂肪率 (GitHub Pages) を WebView で表示し、
  * Health Connect の体重・体脂肪率を読み取って JS 側 (window.onHealthConnect) に渡す。
+ * 手入力した体脂肪率は Health Connect に書き込み、Health やウェリーなど他のアプリにも届ける。
  */
 class MainActivity : ComponentActivity() {
 
@@ -60,6 +64,18 @@ class MainActivity : ComponentActivity() {
         HealthPermission.getReadPermission(WeightRecord::class),
         HealthPermission.getReadPermission(BodyFatRecord::class),
     )
+
+    private val fatWritePermission = HealthPermission.getWritePermission(BodyFatRecord::class)
+
+    private var pendingFatJson: String? = null
+    private val writePermissionLauncher = registerForActivityResult(
+        PermissionController.createRequestPermissionResultContract()
+    ) { granted ->
+        val json = pendingFatJson
+        pendingFatJson = null
+        if (fatWritePermission in granted && json != null) writeFat(json, interactive = true)
+        else sendWrite(JSONObject().put("status", "write_denied"))
+    }
 
     private val permissionLauncher = registerForActivityResult(
         PermissionController.createRequestPermissionResultContract()
@@ -170,6 +186,7 @@ class MainActivity : ComponentActivity() {
                 val start = Instant.now().minus(Duration.ofDays(SYNC_DAYS))
                 val weights = readAll(client, WeightRecord::class, start)
                 val fats = readAll(client, BodyFatRecord::class, start)
+                    .filter { it.metadata.dataOrigin.packageName != packageName }
 
                 val byDate = sortedMapOf<String, JSONObject>()
                 for (r in weights) {
@@ -192,6 +209,67 @@ class MainActivity : ComponentActivity() {
                 send(JSONObject().put("status", "error").put("message", e.message ?: e.toString()))
             }
         }
+    }
+
+    /**
+     * 体脂肪率を Health Connect に書き込む。json は [{date, fat}] で、fat が null の日は削除する。
+     * 日付ごとに clientRecordId を固定しているので、同じ日を書き直すと上書きになる。
+     */
+    private fun writeFat(json: String, interactive: Boolean) {
+        if (HealthConnectClient.getSdkStatus(this, HC_PACKAGE) != HealthConnectClient.SDK_AVAILABLE) return
+        val client = HealthConnectClient.getOrCreate(this)
+        lifecycleScope.launch {
+            try {
+                if (fatWritePermission !in client.permissionController.getGrantedPermissions()) {
+                    if (interactive) {
+                        pendingFatJson = json
+                        writePermissionLauncher.launch(setOf(fatWritePermission))
+                    } else sendWrite(JSONObject().put("status", "need_write_permission"))
+                    return@launch
+                }
+
+                val zone = ZoneId.systemDefault()
+                val now = Instant.now()
+                val version = System.currentTimeMillis()
+                val items = JSONArray(json)
+                val inserts = mutableListOf<BodyFatRecord>()
+                val deletes = mutableListOf<String>()
+                for (i in 0 until items.length()) {
+                    val o = items.getJSONObject(i)
+                    val date = o.getString("date")
+                    val id = "weightlog-fat-$date"
+                    if (o.isNull("fat")) {
+                        deletes += id
+                        continue
+                    }
+                    // 朝7時の測定として記録 (未来の時刻にはしない)
+                    val at = LocalDate.parse(date).atTime(7, 0).atZone(zone).toInstant().let { if (it.isAfter(now)) now else it }
+                    inserts += BodyFatRecord(
+                        time = at,
+                        zoneOffset = zone.rules.getOffset(at),
+                        percentage = Percentage(o.getDouble("fat")),
+                        metadata = Metadata.manualEntry(clientRecordId = id, clientRecordVersion = version),
+                    )
+                }
+                if (inserts.isNotEmpty()) client.insertRecords(inserts)
+                if (deletes.isNotEmpty()) client.deleteRecords(BodyFatRecord::class, emptyList(), deletes)
+
+                sendWrite(
+                    JSONObject()
+                        .put("status", "ok")
+                        .put("interactive", interactive)
+                        .put("written", inserts.size)
+                        .put("deleted", deletes.size)
+                        .put("items", items)
+                )
+            } catch (e: Exception) {
+                sendWrite(JSONObject().put("status", "error").put("message", e.message ?: e.toString()))
+            }
+        }
+    }
+
+    private fun sendWrite(o: JSONObject) = runOnUiThread {
+        web.evaluateJavascript("window.onHealthConnectWrite && window.onHealthConnectWrite($o)", null)
     }
 
     private suspend fun <T : Record> readAll(client: HealthConnectClient, type: KClass<T>, start: Instant): List<T> {
@@ -236,6 +314,9 @@ class MainActivity : ComponentActivity() {
     inner class Bridge {
         @JavascriptInterface
         fun sync(interactive: Boolean) = runOnUiThread { this@MainActivity.sync(interactive) }
+
+        @JavascriptInterface
+        fun writeFat(json: String, interactive: Boolean) = runOnUiThread { this@MainActivity.writeFat(json, interactive) }
 
         @JavascriptInterface
         fun setTheme(dark: Boolean) = runOnUiThread { applyBars(dark) }
