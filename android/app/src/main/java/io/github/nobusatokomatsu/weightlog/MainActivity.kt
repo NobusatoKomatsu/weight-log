@@ -242,8 +242,8 @@ class MainActivity : ComponentActivity() {
                         deletes += id
                         continue
                     }
-                    // 朝7時の測定として記録 (未来の時刻にはしない)
-                    val at = LocalDate.parse(date).atTime(7, 0).atZone(zone).toInstant().let { if (it.isAfter(now)) now else it }
+                    // 朝8時半の測定として記録 (未来の時刻にはしない)
+                    val at = LocalDate.parse(date).atTime(8, 30).atZone(zone).toInstant().let { if (it.isAfter(now)) now else it }
                     inserts += BodyFatRecord(
                         time = at,
                         zoneOffset = zone.rules.getOffset(at),
@@ -314,6 +314,10 @@ class MainActivity : ComponentActivity() {
     inner class Bridge {
         @JavascriptInterface
         fun sync(interactive: Boolean) = runOnUiThread { this@MainActivity.sync(interactive) }
+
+        /** 体脂肪率を書き込む時刻。ページ側はこれが変わると全件を書き直す */
+        @JavascriptInterface
+        fun writeTime(): String = "0830"
 
         @JavascriptInterface
         fun writeFat(json: String, interactive: Boolean) = runOnUiThread { this@MainActivity.writeFat(json, interactive) }

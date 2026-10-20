@@ -32,7 +32,7 @@
 
   <style>
     :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
-    html, body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+    html, body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; overflow-x: clip; max-width: 100%; }
     body { font-feature-settings: "tnum" 1; }
     .glass { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
     .num { font-variant-numeric: tabular-nums; }
@@ -185,9 +185,9 @@
       </div>
     </section>
 
-    <div class="grid md:grid-cols-5 gap-5">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-5">
       <!-- AIアドバイス -->
-      <section class="md:col-span-3 pop rounded-3xl p-5 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm">
+      <section class="md:col-span-3 min-w-0 pop rounded-3xl p-5 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm">
         <div class="flex items-center gap-2 mb-4">
           <div class="h-8 w-8 rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 grid place-items-center">
             <i data-lucide="sparkles" class="h-4 w-4 text-white"></i>
@@ -224,7 +224,7 @@
       </section>
 
       <!-- 履歴 -->
-      <section class="md:col-span-2 pop rounded-3xl p-5 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm">
+      <section class="md:col-span-2 min-w-0 pop rounded-3xl p-5 bg-white dark:bg-white/[.04] border border-slate-200/80 dark:border-white/5 shadow-sm">
         <div class="flex items-center justify-between mb-3">
           <h2 class="font-bold tracking-tight">記録履歴</h2>
           <span class="text-xs text-slate-400" id="historyCount"></span>
@@ -1062,7 +1062,8 @@
   let hcBannerAction = () => hcSync(true);
 
   /* 手入力した体脂肪率を Health Connect に書き込む (Health・ウェリーなど他のアプリにも届ける) */
-  const KEY_HC_FAT = 'wl.hcFatWritten.v1';
+  // 書き込み時刻を 8:30 に変えたアプリでは、記録を全件書き直す (古いアプリは 7:00 のまま)
+  const KEY_HC_FAT = HC && HC.writeTime ? `wl.hcFatWritten.${HC.writeTime()}` : 'wl.hcFatWritten.v1';
   let hcFatWritten = load(KEY_HC_FAT, {});
   let hcPushing = false;
   function hcPushFat(interactive) {
