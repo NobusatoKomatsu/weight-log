@@ -55,7 +55,7 @@ function chemClassOf(n, elements) {
   if (/NO3/.test(n)) return 'nitrate';
   if (/BO3|B\d*O|BO4/.test(n)) return 'borate';
   if (/C2O4|C\d*H\d+(?![a-z])|CH\d|COO/.test(n) && hasO) return 'organic';
-  if (!hasO && /(S|Se|Te|As|Sb|Bi)(?![a-z])/.test(n) && elements.some((e) => !['S', 'Se', 'Te', 'As', 'Sb', 'Bi'].includes(e))) return 'sulfide';
+  if (!hasO && elements.length >= 2 && /(S|Se|Te|As|Sb|Bi)(?![a-z])/.test(n)) return 'sulfide';
   if (!hasO && /(F|Cl|Br|I)(?![a-z])/.test(n)) return 'halide';
   if (hasO) return 'oxide';
   return 'other';
