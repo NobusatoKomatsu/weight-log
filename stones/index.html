@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ja" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>世界の石 図鑑</title>
+  <meta name="description" content="世界中の鉱物・岩石・隕石を、産地・化学式・結晶系・硬度・大きさ・できかたから画像つきで検索できる図鑑。Wikidata・Wikipedia・Wikimedia Commons・Mastodon・Bluesky の公開データを集約。" />
+  <meta name="theme-color" content="#0b0f1a" id="metaTheme" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="石図鑑" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%2334d399' d='M32 4 58 20v24L32 60 6 44V20z'/%3E%3Cpath fill='%23059669' d='M32 4v56L6 44V20z'/%3E%3Cpath fill='%23a7f3d0' d='M32 4 58 20 32 32 6 20z'/%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: { fontFamily: { sans: ['Inter', '"Noto Sans JP"', 'system-ui', 'sans-serif'] } } },
+    };
+  </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+
+  <style type="text/tailwindcss">
+    :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
+    html, body { -webkit-tap-highlight-color: transparent; overflow-x: clip; max-width: 100%; }
+    .glass { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+    .num { font-variant-numeric: tabular-nums; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { scrollbar-width: none; }
+    @keyframes pop { 0% { transform: translateY(8px); opacity: 0 } 100% { transform: none; opacity: 1 } }
+    .pop { animation: pop .3s ease both; }
+    .card img { transition: transform .3s ease; }
+    .card:hover img { transform: scale(1.04); }
+    .chip { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium; }
+    .formula sub { font-size: .72em; }
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .line-clamp-5 { display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+    #map { min-height: 60vh; height: calc(100vh - 260px); }
+    .leaflet-container { background: #0f172a; font-family: inherit; }
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #111827; color: #f1f5f9; }
+    html:not(.dark) .leaflet-container { background: #e2e8f0; }
+    html:not(.dark) .leaflet-popup-content-wrapper, html:not(.dark) .leaflet-popup-tip { background: #fff; color: #0f172a; }
+    .skeleton { background: linear-gradient(90deg, rgba(148,163,184,.15) 25%, rgba(148,163,184,.3) 50%, rgba(148,163,184,.15) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+    @keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+    select, input[type="text"], input[type="number"], input[type="search"] { color-scheme: dark; }
+    html:not(.dark) select, html:not(.dark) input { color-scheme: light; }
+    .field { @apply w-full rounded-xl border border-slate-300/70 bg-white/80 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-400/60 dark:border-white/10 dark:bg-white/5; }
+    .btn { @apply inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition active:scale-95; }
+    .btn-ghost { @apply bg-slate-200/70 hover:bg-slate-300/70 dark:bg-white/10 dark:hover:bg-white/15; }
+    .btn-primary { @apply bg-emerald-500 text-white hover:bg-emerald-400; }
+    .tab { @apply rounded-xl px-3 py-1.5 text-sm font-medium text-slate-500 transition dark:text-slate-400; }
+    .tab[aria-selected="true"] { @apply bg-white text-slate-900 shadow dark:bg-white/15 dark:text-white; }
+    .type-chip[aria-pressed="true"] { @apply bg-emerald-500 text-white; }
+  </style>
+</head>
+
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0b0f1a] dark:text-slate-100 font-sans antialiased">
+  <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+    <div class="absolute -top-32 -left-24 h-80 w-80 rounded-full bg-emerald-400/20 blur-3xl dark:bg-emerald-600/20"></div>
+    <div class="absolute top-40 -right-24 h-72 w-72 rounded-full bg-amber-300/20 blur-3xl dark:bg-amber-600/10"></div>
+  </div>
+
+  <!-- ヘッダー -->
+  <header class="sticky top-0 z-30 glass bg-white/70 dark:bg-[#0b0f1a]/70 border-b border-slate-200/70 dark:border-white/5" style="padding-top: var(--safe-top)">
+    <div class="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="h-8 w-8 shrink-0 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 grid place-items-center text-white shadow">
+          <i data-lucide="gem" class="h-4 w-4"></i>
+        </div>
+        <div class="min-w-0">
+          <h1 class="font-bold leading-tight truncate">世界の石 図鑑</h1>
+          <p id="headCount" class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight truncate">読み込み中…</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button id="btnTheme" class="btn btn-ghost !px-2.5" title="テーマ切替"><i data-lucide="sun-moon" class="h-4 w-4"></i></button>
+        <button id="btnSettings" class="btn btn-ghost !px-2.5" title="設定・データ"><i data-lucide="settings-2" class="h-4 w-4"></i></button>
+      </div>
+    </div>
+
+    <!-- 検索バー -->
+    <div class="mx-auto max-w-6xl px-4 pb-3 space-y-2">
+      <div class="flex gap-2">
+        <label class="relative flex-1">
+          <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"></i>
+          <input id="q" type="search" class="field !pl-9" placeholder="名前・化学式・産地・国・元素で検索（例: 石英 / SiO2 / Cu / 長野）" autocomplete="off" />
+        </label>
+        <button id="btnFilters" class="btn btn-ghost whitespace-nowrap"><i data-lucide="sliders-horizontal" class="h-4 w-4"></i><span class="hidden sm:inline">絞り込み</span><span id="filterBadge" class="hidden rounded-full bg-emerald-500 px-1.5 text-[10px] text-white">0</span></button>
+      </div>
+      <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
+        <div class="flex gap-1.5 shrink-0" id="typeChips">
+          <button class="type-chip btn btn-ghost !py-1 !text-xs" data-type="" aria-pressed="true">すべて</button>
+          <button class="type-chip btn btn-ghost !py-1 !text-xs" data-type="mineral">鉱物</button>
+          <button class="type-chip btn btn-ghost !py-1 !text-xs" data-type="rock">岩石</button>
+          <button class="type-chip btn btn-ghost !py-1 !text-xs" data-type="meteorite">隕石</button>
+        </div>
+        <div class="ml-auto flex items-center gap-1.5 shrink-0">
+          <label class="text-xs text-slate-500">並び</label>
+          <select id="sort" class="field !w-auto !py-1 !text-xs">
+            <option value="name">名前</option>
+            <option value="mohs">硬度</option>
+            <option value="density">密度</option>
+            <option value="mass">質量・大きさ</option>
+            <option value="year">発見年</option>
+            <option value="distance">距離</option>
+            <option value="image">画像あり優先</option>
+          </select>
+          <div role="tablist" class="flex rounded-xl bg-slate-200/60 p-0.5 dark:bg-white/5">
+            <button class="tab" role="tab" data-view="list" aria-selected="true"><i data-lucide="layout-grid" class="h-4 w-4"></i></button>
+            <button class="tab" role="tab" data-view="map" aria-selected="false"><i data-lucide="map" class="h-4 w-4"></i></button>
+            <button class="tab" role="tab" data-view="sns" aria-selected="false"><i data-lucide="message-circle" class="h-4 w-4"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4 pb-24 pt-4">
+    <!-- 絞り込みパネル -->
+    <section id="filters" class="hidden mb-4 rounded-2xl border border-slate-200/70 bg-white/70 p-4 glass dark:border-white/10 dark:bg-white/5 pop">
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="sm:col-span-2 lg:col-span-3">
+          <label class="text-xs font-semibold text-slate-500">含まれる元素（化学式から判定）</label>
+          <div class="mt-1 flex flex-wrap gap-1.5" id="elementChips"></div>
+          <input id="elementInput" type="text" class="field mt-2" placeholder="元素記号をスペース区切りで（例: Cu Fe S）" />
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-500">化学分類（鉱物）</label>
+          <select id="fClass" class="field mt-1"><option value="">すべて</option></select>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-500">結晶系</label>
+          <select id="fCrystal" class="field mt-1"><option value="">すべて</option></select>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-500">色</label>
+          <select id="fColor" class="field mt-1"><option value="">すべて</option></select>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-500">できかた（岩石の成因・隕石の種類）</label>
+          <select id="fOrigin" class="field mt-1"><option value="">すべて</option></select>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-500">国・地域（模式産地 / 落下地）</label>
+          <input id="fCountry" list="countryList" type="text" class="field mt-1" placeholder="例: 日本" />
+          <datalist id="countryList"></datalist>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-500">モース硬度</label>
+          <div class="mt-1 flex items-center gap-2">
+            <input id="fMohsMin" type="number" step="0.5" min="1" max="10" class="field" placeholder="1" />
+            <span class="text-slate-400">〜</span>
+            <input id="fMohsMax" type="number" step="0.5" min="1" max="10" class="field" placeholder="10" />
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-500">密度 (g/cm³)</label>
+          <div class="mt-1 flex items-center gap-2">
+            <input id="fDenMin" type="number" step="0.1" min="0" class="field" placeholder="0" />
+            <span class="text-slate-400">〜</span>
+            <input id="fDenMax" type="number" step="0.1" min="0" class="field" placeholder="25" />
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-500">質量 (kg)・大きさ（隕石・有名標本）</label>
+          <div class="mt-1 flex items-center gap-2">
+            <input id="fMassMin" type="number" step="any" min="0" class="field" placeholder="0" />
+            <span class="text-slate-400">〜</span>
+            <input id="fMassMax" type="number" step="any" min="0" class="field" placeholder="100000" />
+          </div>
+        </div>
+        <div class="sm:col-span-2 lg:col-span-3">
+          <label class="text-xs font-semibold text-slate-500">位置で絞り込む</label>
+          <div class="mt-1 flex flex-wrap items-center gap-2">
+            <button id="btnGeo" class="btn btn-ghost"><i data-lucide="locate" class="h-4 w-4"></i>現在地を中心に</button>
+            <button id="btnMapCenter" class="btn btn-ghost"><i data-lucide="map-pin" class="h-4 w-4"></i>地図の中心を使う</button>
+            <span id="centerLabel" class="text-xs text-slate-500">中心: 未設定</span>
+            <label class="flex items-center gap-1 text-sm">半径 <input id="fRadius" type="number" min="1" class="field !w-24" placeholder="500" /> km</label>
+            <label class="flex items-center gap-1.5 text-sm"><input id="fBbox" type="checkbox" class="accent-emerald-500" />地図の表示範囲内だけ</label>
+          </div>
+        </div>
+        <div class="sm:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-4">
+          <label class="flex items-center gap-1.5 text-sm"><input id="fImage" type="checkbox" class="accent-emerald-500" />画像あり</label>
+          <label class="flex items-center gap-1.5 text-sm"><input id="fCoord" type="checkbox" class="accent-emerald-500" />位置情報あり</label>
+          <label class="flex items-center gap-1.5 text-sm"><input id="fFormula" type="checkbox" class="accent-emerald-500" />化学式あり</label>
+          <label class="flex items-center gap-1.5 text-sm"><input id="fJa" type="checkbox" class="accent-emerald-500" />日本語名あり</label>
+          <button id="btnReset" class="btn btn-ghost ml-auto"><i data-lucide="rotate-ccw" class="h-4 w-4"></i>リセット</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 読み込み中 -->
+    <section id="loading" class="rounded-2xl border border-slate-200/70 bg-white/70 p-6 text-center glass dark:border-white/10 dark:bg-white/5">
+      <div class="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-4 border-emerald-400/30 border-t-emerald-500"></div>
+      <p id="loadingText" class="text-sm font-medium">石のデータを読み込んでいます…</p>
+      <p id="loadingSub" class="mt-1 text-xs text-slate-500"></p>
+    </section>
+
+    <!-- エラー -->
+    <section id="error" class="hidden rounded-2xl border border-rose-300/60 bg-rose-50/80 p-4 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+      <div class="flex items-start gap-2"><i data-lucide="alert-triangle" class="h-4 w-4 mt-0.5 shrink-0"></i><div><p class="font-semibold">読み込みに失敗しました</p><pre id="errorText" class="mt-1 whitespace-pre-wrap break-all text-xs opacity-80"></pre><button id="btnRetry" class="btn btn-primary mt-2">ライブで再取得</button></div></div>
+    </section>
+
+    <!-- 一覧 -->
+    <section id="viewList" class="hidden">
+      <div class="mb-3 flex items-center justify-between text-sm text-slate-500">
+        <span id="resultCount"></span>
+        <span id="activeCenter" class="text-xs"></span>
+      </div>
+      <div id="grid" class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"></div>
+      <div class="mt-4 flex justify-center"><button id="btnMore" class="btn btn-ghost hidden">もっと見る</button></div>
+      <p id="empty" class="hidden py-16 text-center text-sm text-slate-500">条件に合う石が見つかりません。</p>
+    </section>
+
+    <!-- 地図 -->
+    <section id="viewMap" class="hidden">
+      <div class="mb-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+        <span class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded-full bg-emerald-400"></span>鉱物の模式産地</span>
+        <span class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded-full bg-amber-400"></span>隕石の落下・発見地</span>
+        <span id="mapCount" class="ml-auto"></span>
+      </div>
+      <div id="map" class="rounded-2xl overflow-hidden border border-slate-200/70 dark:border-white/10"></div>
+      <p class="mt-2 text-xs text-slate-500">点をタップで詳細。地図を長押し（右クリック）するとその地点を「距離の中心」に設定できます。</p>
+    </section>
+
+    <!-- SNS -->
+    <section id="viewSns" class="hidden">
+      <div class="rounded-2xl border border-slate-200/70 bg-white/70 p-4 glass dark:border-white/10 dark:bg-white/5">
+        <form id="snsForm" class="flex flex-wrap gap-2">
+          <input id="snsQ" type="search" class="field flex-1 min-w-[12rem]" placeholder="キーワード（例: quartz / 水晶 / meteorite）" />
+          <button class="btn btn-primary" type="submit"><i data-lucide="search" class="h-4 w-4"></i>SNSを検索</button>
+        </form>
+        <div class="mt-2 flex flex-wrap items-center gap-4 text-sm">
+          <label class="flex items-center gap-1.5"><input id="snsMastodon" type="checkbox" checked class="accent-emerald-500" />Mastodon</label>
+          <label class="flex items-center gap-1.5"><input id="snsBluesky" type="checkbox" checked class="accent-emerald-500" />Bluesky</label>
+          <label class="flex items-center gap-1.5"><input id="snsImagesOnly" type="checkbox" checked class="accent-emerald-500" />画像つきのみ</label>
+          <span id="snsStatus" class="ml-auto text-xs text-slate-500"></span>
+        </div>
+        <div id="snsLinks" class="mt-2 flex flex-wrap gap-1.5"></div>
+      </div>
+      <div id="snsGrid" class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"></div>
+    </section>
+  </main>
+
+  <!-- 詳細 -->
+  <div id="detail" class="fixed inset-0 z-40 hidden">
+    <div class="absolute inset-0 bg-black/60" data-close></div>
+    <div class="absolute inset-x-0 bottom-0 top-0 sm:top-6 sm:bottom-6 sm:left-1/2 sm:w-[min(56rem,96vw)] sm:-translate-x-1/2 overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-slate-50 dark:bg-[#0f1424] shadow-2xl pop" id="detailPanel">
+      <div class="sticky top-0 z-10 flex items-center justify-between gap-2 glass bg-slate-50/80 dark:bg-[#0f1424]/80 px-4 py-3 border-b border-slate-200/70 dark:border-white/5">
+        <div class="min-w-0">
+          <h2 id="dTitle" class="truncate text-lg font-bold"></h2>
+          <p id="dSub" class="truncate text-xs text-slate-500"></p>
+        </div>
+        <div class="flex items-center gap-1 shrink-0">
+          <button id="dShare" class="btn btn-ghost !px-2.5" title="リンクをコピー"><i data-lucide="link" class="h-4 w-4"></i></button>
+          <button class="btn btn-ghost !px-2.5" data-close title="閉じる"><i data-lucide="x" class="h-4 w-4"></i></button>
+        </div>
+      </div>
+      <div id="dBody" class="p-4 space-y-5"></div>
+    </div>
+  </div>
+
+  <!-- 設定 -->
+  <div id="settings" class="fixed inset-0 z-40 hidden">
+    <div class="absolute inset-0 bg-black/60" data-close></div>
+    <div class="absolute inset-x-0 bottom-0 sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:w-[min(32rem,94vw)] sm:-translate-x-1/2 sm:-translate-y-1/2 rounded-t-3xl sm:rounded-3xl bg-slate-50 dark:bg-[#0f1424] shadow-2xl p-5 space-y-4 pop">
+      <div class="flex items-center justify-between"><h2 class="font-bold">設定・データ</h2><button class="btn btn-ghost !px-2.5" data-close><i data-lucide="x" class="h-4 w-4"></i></button></div>
+      <div class="text-sm space-y-1">
+        <p id="sData" class="text-slate-600 dark:text-slate-300"></p>
+        <div class="flex flex-wrap gap-2 pt-1">
+          <button id="btnLive" class="btn btn-primary"><i data-lucide="cloud-download" class="h-4 w-4"></i>Wikidata からライブ再取得</button>
+          <button id="btnClearCache" class="btn btn-ghost"><i data-lucide="trash-2" class="h-4 w-4"></i>端末内キャッシュを削除</button>
+        </div>
+      </div>
+      <div>
+        <label class="text-xs font-semibold text-slate-500">Mastodon サーバー（公開タイムライン検索に使用）</label>
+        <input id="sMastodon" type="text" class="field mt-1" placeholder="mastodon.social" />
+      </div>
+      <div class="text-xs text-slate-500 space-y-1 leading-relaxed">
+        <p>データ出典: <a class="underline" href="https://www.wikidata.org/" target="_blank" rel="noopener">Wikidata</a>（CC0）、<a class="underline" href="https://ja.wikipedia.org/" target="_blank" rel="noopener">Wikipedia</a>・<a class="underline" href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a>（各画像は個別のライセンス）、Mastodon・Bluesky の公開投稿。</p>
+        <p>検索はすべてこのブラウザから各サービスの公開 API へ直接アクセスします。個人データは送信しません。</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-slate-900 px-4 py-2 text-sm text-white shadow-lg opacity-0 transition pointer-events-none dark:bg-white dark:text-slate-900"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
