@@ -26,6 +26,7 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val ACTION_NEW = "io.github.nobusatokomatsu.screenmemo.NEW"
         const val ACTION_VOICE = "io.github.nobusatokomatsu.screenmemo.VOICE"
+        // TODO: 画面メモ用のドメインを取得したら、そこで公開するプライバシーポリシーの URL に置き換える
         const val PRIVACY_URL = "https://sixpac.jp/memo/privacy.html"
     }
 

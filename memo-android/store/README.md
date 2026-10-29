@@ -9,7 +9,7 @@ Play Console に入力する内容と、手順をまとめています。上か�
 | 提出するアプリ (AAB) | [Releases の memo](https://github.com/NobusatoKomatsu/weight-log/releases/tag/memo) の `screen-memo.aab`（`main` に入れるたび自動で作り直されます） |
 | アプリのアイコン 512×512 | `memo-android/store/icon-512.png` |
 | フィーチャーグラフィック 1024×500 | `memo-android/store/feature-graphic-1024x500.png` |
-| プライバシーポリシー | https://sixpac.jp/memo/privacy.html |
+| プライバシーポリシー | `memo-android/store/privacy.html` を、新しく取るドメインで公開（URL はアプリの `MainActivity.PRIVACY_URL` にも入れる） |
 | スクリーンショット 2〜8 枚 | **実機で撮影**（下の「5. スクリーンショット」） |
 | 申告用の動画 1 本 | **実機で録画**して YouTube に「限定公開」でアップ（下の「4. 権限の申告」） |
 
@@ -78,7 +78,7 @@ Play Console に入力する内容と、手順をまとめています。上か�
 
 | 項目 | 回答 |
 |---|---|
-| プライバシーポリシー | `https://sixpac.jp/memo/privacy.html` |
+| プライバシーポリシー | 新しいドメインで公開したプライバシーポリシーの URL |
 | 広告 | 含まない |
 | アプリのアクセス権 | すべての機能に特別なアクセス権は不要（ログインなし） |
 | コンテンツのレーティング | カテゴリ「その他（ユーティリティ、生産性向上…）」→ 暴力・性的表現・ユーザー間のやり取り・位置情報の共有・購入などはすべて「いいえ」 |
