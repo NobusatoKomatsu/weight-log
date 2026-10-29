@@ -1,6 +1,7 @@
 package io.github.nobusatokomatsu.screenmemo
 
 import android.Manifest
+import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
@@ -120,7 +121,7 @@ class MainActivity : ComponentActivity() {
         list.removeAllViews()
         if (memos.isEmpty()) {
             list.addView(TextView(this).apply {
-                text = "まだメモがありません。\n下の「＋ 新しいメモ」から作りましょう。\n\n・文字の大きさや色を選べます\n・🎤 音声でも入力できます\n・「明日15時 歯医者」のように日付を書くと、Googleカレンダーに追加できます\n・画面の上 / ホーム画面 / ロック画面 から表示先を選べます\n・用が済んだら、画面の上のメモは長押し、通知は「済み」で消せます\n・アイコン長押しで「新しいメモ」「音声でメモ」"
+                text = "まだメモがありません。\n下の「＋ 新しいメモ」から作りましょう。\n\n・文字の大きさや色を選べます\n・🎤 音声でも入力できます\n・「明日15時 歯医者」のように日付を書くと、Googleカレンダー・Outlook（Microsoft 365）に追加できます\n・画面の上 / ホーム画面 / ロック画面 から表示先を選べます\n・用が済んだら、画面の上のメモは長押し、通知は「済み」で消せます\n・アイコン長押しで「新しいメモ」「音声でメモ」"
                 textSize = 15f
                 setLineSpacing(0f, 1.4f)
                 setTextColor(Color.parseColor("#6B7280"))
@@ -128,6 +129,34 @@ class MainActivity : ComponentActivity() {
             })
         }
         memos.forEach { list.addView(row(it)) }
+        list.addView(calendarSetting())
+    }
+
+    /** 日付のあるメモを、どのカレンダーに追加するか (Google / Outlook = Microsoft 365) */
+    private fun calendarSetting(): View = TextView(this).apply {
+        text = "📅 予定を追加するカレンダー：${CalendarLink.app(this@MainActivity).label}  ›"
+        textSize = 14f
+        setTextColor(Color.parseColor("#374151"))
+        background = roundRect(Color.WHITE, dp(14).toFloat())
+        setPadding(dp(14), dp(14), dp(14), dp(14))
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+            topMargin = dp(24)
+        }
+        setOnClickListener {
+            val apps = CalendarLink.App.entries
+            AlertDialog.Builder(this@MainActivity)
+                .setTitle("予定を追加するカレンダー")
+                .setSingleChoiceItems(
+                    apps.map { it.label }.toTypedArray(),
+                    apps.indexOf(CalendarLink.app(this@MainActivity)),
+                ) { d, which ->
+                    CalendarLink.setApp(this@MainActivity, apps[which])
+                    d.dismiss()
+                    render()
+                }
+                .setNegativeButton("キャンセル", null)
+                .show()
+        }
     }
 
     private fun row(m: Memo): View {

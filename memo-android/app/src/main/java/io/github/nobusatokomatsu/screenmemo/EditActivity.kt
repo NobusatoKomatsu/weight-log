@@ -11,7 +11,6 @@ import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.CalendarContract
 import android.provider.Settings
 import android.speech.RecognizerIntent
 import android.text.InputType
@@ -392,7 +391,7 @@ class EditActivity : ComponentActivity() {
         calButton.visibility = if (hit == null) View.GONE else View.VISIBLE
         if (hit != null) {
             val done = if (hit.key == memo.calKey) "（登録済み）" else ""
-            calButton.text = "📅 ${hit.label}「${hit.title}」をGoogleカレンダーに追加$done"
+            calButton.text = "📅 ${hit.label}「${hit.title}」を${CalendarLink.targetName(this)}に追加$done"
         }
         sizeLabel.text = "文字の大きさ：${memo.size}"
         mini.applyMemo(memo, memo.size * 0.35f + 3f)
@@ -444,31 +443,13 @@ class EditActivity : ComponentActivity() {
         input.setSelection(start + s.length)
     }
 
-    // ---------- Googleカレンダー ----------
+    // ---------- カレンダー ----------
 
-    /** カレンダーの予定作成画面を、日時とタイトルを入れた状態で開く (保存はカレンダー側で) */
+    /** 選んだカレンダーの予定作成画面を、日時とタイトルを入れた状態で開く (保存はカレンダー側で) */
     private fun addToCalendar(hit: DateFinder.Hit) {
-        val zone = java.time.ZoneId.systemDefault()
-        val start = (if (hit.time == null) hit.date.atStartOfDay() else hit.date.atTime(hit.time)).atZone(zone)
-        val end = if (hit.time == null) start.plusDays(1) else start.plusHours(1)
-        val i = Intent(Intent.ACTION_INSERT)
-            .setData(CalendarContract.Events.CONTENT_URI)
-            .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, start.toInstant().toEpochMilli())
-            .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, end.toInstant().toEpochMilli())
-            .putExtra(CalendarContract.EXTRA_EVENT_ALL_DAY, hit.time == null)
-            .putExtra(CalendarContract.Events.TITLE, hit.title)
-            .putExtra(CalendarContract.Events.DESCRIPTION, memo.text.trim())
         memo.calKey = hit.key
         refreshPreview()
-        try {
-            startActivity(Intent(i).setPackage("com.google.android.calendar"))
-        } catch (e: ActivityNotFoundException) {
-            try {
-                startActivity(i)
-            } catch (e: ActivityNotFoundException) {
-                Toast.makeText(this, "カレンダーアプリが見つかりません", Toast.LENGTH_LONG).show()
-            }
-        }
+        CalendarLink.open(this, hit, memo.text.trim())
     }
 
     // ---------- 保存・削除 ----------
@@ -523,7 +504,7 @@ class EditActivity : ComponentActivity() {
             hit != null && hit.key != memo.calKey && !askedCalendar -> {
                 askedCalendar = true
                 AlertDialog.Builder(this)
-                    .setTitle("📅 Googleカレンダーにも登録しますか？")
+                    .setTitle("📅 ${CalendarLink.targetName(this)}にも登録しますか？")
                     .setMessage("${hit.label}\n${hit.title}")
                     .setPositiveButton("登録する") { _, _ ->
                         addToCalendar(hit)
