@@ -41,8 +41,9 @@ class EditActivity : ComponentActivity() {
 
     companion object {
         private const val EXTRA_ID = "id"
-        fun intent(ctx: Context, id: Long): Intent =
-            Intent(ctx, EditActivity::class.java).putExtra(EXTRA_ID, id)
+        private const val EXTRA_VOICE = "voice"
+        fun intent(ctx: Context, id: Long, voice: Boolean = false): Intent =
+            Intent(ctx, EditActivity::class.java).putExtra(EXTRA_ID, id).putExtra(EXTRA_VOICE, voice)
 
         private val TEXT_COLORS = listOf(
             "白" to Color.WHITE, "黒" to Color.BLACK, "黄" to 0xFFFFEB3B.toInt(), "赤" to 0xFFF44336.toInt(),
@@ -100,7 +101,9 @@ class EditActivity : ComponentActivity() {
 
         setContentView(buildUi())
         refreshAll()
-        if (isNew) {
+        if (savedInstanceState == null && intent.getBooleanExtra(EXTRA_VOICE, false)) {
+            startVoice()
+        } else if (isNew) {
             input.requestFocus()
             window.setSoftInputMode(
                 WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE or WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE

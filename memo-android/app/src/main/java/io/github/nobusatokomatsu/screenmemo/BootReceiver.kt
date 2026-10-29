@@ -10,3 +10,15 @@ class BootReceiver : BroadcastReceiver() {
         Display.refresh(ctx)
     }
 }
+
+/** 通知の「済み」ボタン */
+class DoneReceiver : BroadcastReceiver() {
+    companion object {
+        const val EXTRA_ID = "id"
+    }
+
+    override fun onReceive(ctx: Context, intent: Intent) {
+        val id = intent.getLongExtra(EXTRA_ID, -1L)
+        if (id != -1L) Display.hide(ctx, id)
+    }
+}

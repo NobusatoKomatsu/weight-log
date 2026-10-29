@@ -22,6 +22,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 /** メモの一覧。各メモの表示のオン・オフと、新しいメモの追加 */
 class MainActivity : ComponentActivity() {
 
+    companion object {
+        const val ACTION_NEW = "io.github.nobusatokomatsu.screenmemo.NEW"
+        const val ACTION_VOICE = "io.github.nobusatokomatsu.screenmemo.VOICE"
+    }
+
     private lateinit var list: LinearLayout
     private lateinit var banners: LinearLayout
 
@@ -72,6 +77,22 @@ class MainActivity : ComponentActivity() {
                 setMargins(dp(16), dp(8), dp(16), dp(16))
             })
         })
+        if (savedInstanceState == null) handleShortcut(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleShortcut(intent)
+    }
+
+    /** ホーム画面のアイコン長押しメニューから「新しいメモ」「音声でメモ」 */
+    private fun handleShortcut(intent: Intent?) {
+        when (intent?.action) {
+            ACTION_NEW -> startActivity(EditActivity.intent(this, -1L))
+            ACTION_VOICE -> startActivity(EditActivity.intent(this, -1L, voice = true))
+            else -> return
+        }
+        intent?.action = null
     }
 
     override fun onResume() {
@@ -99,7 +120,7 @@ class MainActivity : ComponentActivity() {
         list.removeAllViews()
         if (memos.isEmpty()) {
             list.addView(TextView(this).apply {
-                text = "まだメモがありません。\n下の「＋ 新しいメモ」から作りましょう。\n\n・文字の大きさや色を選べます\n・🎤 音声でも入力できます\n・画面の上 / ホーム画面 / ロック画面 から表示先を選べます"
+                text = "まだメモがありません。\n下の「＋ 新しいメモ」から作りましょう。\n\n・文字の大きさや色を選べます\n・🎤 音声でも入力できます\n・画面の上 / ホーム画面 / ロック画面 から表示先を選べます\n・用が済んだら、画面の上のメモは長押し、通知は「済み」で消せます\n・アイコン長押しで「新しいメモ」「音声でメモ」"
                 textSize = 15f
                 setLineSpacing(0f, 1.4f)
                 setTextColor(Color.parseColor("#6B7280"))

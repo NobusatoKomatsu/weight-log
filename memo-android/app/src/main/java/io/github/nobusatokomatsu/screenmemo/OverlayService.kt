@@ -18,7 +18,7 @@ import kotlin.math.hypot
 
 /**
  * 「画面の上」を選んだメモを、他のアプリの上に浮かべて表示する。
- * メモは指でドラッグして動かせ、タップすると編集画面が開く。
+ * メモは指でドラッグして動かせ、タップすると編集画面が開き、長押しで非表示 (済み) になる。
  */
 class OverlayService : Service() {
 
@@ -105,23 +105,37 @@ class OverlayService : Service() {
             var ox = 0
             var oy = 0
             var moved = false
+            var longPressed = false
+            // 長押しで「済み」= 非表示にする
+            val hide = Runnable {
+                longPressed = true
+                Display.hide(this, m.id)
+            }
             tv.setOnTouchListener { v, e ->
                 when (e.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
-                        sx = e.rawX; sy = e.rawY; ox = lp.x; oy = lp.y; moved = false
+                        sx = e.rawX; sy = e.rawY; ox = lp.x; oy = lp.y; moved = false; longPressed = false
+                        v.postDelayed(hide, ViewConfiguration.getLongPressTimeout().toLong() * 2)
                     }
                     MotionEvent.ACTION_MOVE -> {
                         val ddx = e.rawX - sx
                         val ddy = e.rawY - sy
-                        if (!moved && hypot(ddx, ddy) > slop) moved = true
+                        if (!moved && hypot(ddx, ddy) > slop) {
+                            moved = true
+                            v.removeCallbacks(hide)
+                        }
                         if (moved) {
                             lp.x = ox + (ddx * hx).toInt()
                             lp.y = oy + (ddy * hy).toInt()
                             runCatching { wm.updateViewLayout(v, lp) }
                         }
                     }
+                    MotionEvent.ACTION_CANCEL -> v.removeCallbacks(hide)
                     MotionEvent.ACTION_UP -> {
-                        if (moved) {
+                        v.removeCallbacks(hide)
+                        if (longPressed) {
+                            // 非表示にした後なので何もしない
+                        } else if (moved) {
                             MemoStore.update(this, m.id) { it.dx = lp.x - baseX; it.dy = lp.y - baseY }
                         } else {
                             startActivity(EditActivity.intent(this, m.id).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))

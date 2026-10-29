@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
+import android.widget.Toast
 
 /** 保存されたメモを、選ばれた表示先 (画面の上・ホーム画面・ロック画面/通知) に反映する */
 object Display {
@@ -27,6 +28,13 @@ object Display {
         }
         syncNotifications(ctx, memos)
         MemoWidget.updateAll(ctx)
+    }
+
+    /** 買い物が済んだときなど、メモを非表示にする (メモ自体は一覧に残る) */
+    fun hide(ctx: Context, id: Long) {
+        MemoStore.update(ctx, id) { it.on = false }
+        refresh(ctx)
+        Toast.makeText(ctx, "メモを非表示にしました（アプリの一覧から再表示できます）", Toast.LENGTH_SHORT).show()
     }
 
     fun canNotify(ctx: Context) = Build.VERSION.SDK_INT < 33 ||
@@ -64,6 +72,10 @@ object Display {
                 ctx, id, EditActivity.intent(ctx, m.id),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
+            val done = PendingIntent.getBroadcast(
+                ctx, id, Intent(ctx, DoneReceiver::class.java).putExtra(DoneReceiver.EXTRA_ID, m.id),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
             val lines = m.text.trim().lines()
             val n = Notification.Builder(ctx, CH_MEMO)
                 .setSmallIcon(R.drawable.ic_note)
@@ -71,6 +83,7 @@ object Display {
                 .setContentText(lines.drop(1).joinToString(" ").ifBlank { null })
                 .setStyle(Notification.BigTextStyle().bigText(m.text.trim()))
                 .setContentIntent(open)
+                .addAction(Notification.Action.Builder(null, "済み（非表示）", done).build())
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .setOngoing(true)
                 .setShowWhen(false)
