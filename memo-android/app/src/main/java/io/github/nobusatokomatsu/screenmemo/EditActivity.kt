@@ -11,6 +11,7 @@ import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.CalendarContract
 import android.provider.Settings
 import android.speech.RecognizerIntent
 import android.text.InputType
@@ -70,6 +71,7 @@ class EditActivity : ComponentActivity() {
     private lateinit var positionSection: View
     private lateinit var phone: FrameLayout
     private lateinit var mini: TextView
+    private lateinit var calButton: android.widget.Button
     private val posCells = mutableListOf<TextView>()
     private val textChips = mutableListOf<Pair<Int, View>>()
     private val bgChips = mutableListOf<Pair<Int, View>>()
@@ -78,6 +80,7 @@ class EditActivity : ComponentActivity() {
     private var askedOverlay = false
     private var askedNotify = false
     private var askedWidget = false
+    private var askedCalendar = false
 
     private val speech = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         val said = r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
@@ -160,6 +163,9 @@ class EditActivity : ComponentActivity() {
             doAfterTextChanged { memo.text = it?.toString().orEmpty(); refreshPreview() }
         }
         val mic = pillButton("🎤 音声で入力", Color.parseColor("#1F2937"), Color.WHITE) { startVoice() }
+        calButton = pillButton("", Color.parseColor("#1A73E8"), Color.WHITE) {
+            DateFinder.find(memo.text)?.let { addToCalendar(it) }
+        }.apply { textSize = 14f }
 
         preview = TextView(this)
         val previewBox = FrameLayout(this).apply {
@@ -215,7 +221,7 @@ class EditActivity : ComponentActivity() {
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(16), 0, dp(16), dp(16))
-            addView(section("メモ", input, spaced(mic, 8)))
+            addView(section("メモ", input, spaced(mic, 8), spaced(calButton, 8)))
             addView(section("プレビュー", previewBox))
             addView(section("文字の大きさ", sizeLabel, sizeRow, bold))
             addView(section("文字の色", chipRow(TEXT_COLORS, textChips) { memo.color = it; refreshAll() }))
@@ -382,6 +388,12 @@ class EditActivity : ComponentActivity() {
 
     private fun refreshPreview() {
         preview.applyMemo(memo)
+        val hit = DateFinder.find(memo.text)
+        calButton.visibility = if (hit == null) View.GONE else View.VISIBLE
+        if (hit != null) {
+            val done = if (hit.key == memo.calKey) "（登録済み）" else ""
+            calButton.text = "📅 ${hit.label}「${hit.title}」をGoogleカレンダーに追加$done"
+        }
         sizeLabel.text = "文字の大きさ：${memo.size}"
         mini.applyMemo(memo, memo.size * 0.35f + 3f)
         val margin = dp(4)
@@ -432,6 +444,33 @@ class EditActivity : ComponentActivity() {
         input.setSelection(start + s.length)
     }
 
+    // ---------- Googleカレンダー ----------
+
+    /** カレンダーの予定作成画面を、日時とタイトルを入れた状態で開く (保存はカレンダー側で) */
+    private fun addToCalendar(hit: DateFinder.Hit) {
+        val zone = java.time.ZoneId.systemDefault()
+        val start = (if (hit.time == null) hit.date.atStartOfDay() else hit.date.atTime(hit.time)).atZone(zone)
+        val end = if (hit.time == null) start.plusDays(1) else start.plusHours(1)
+        val i = Intent(Intent.ACTION_INSERT)
+            .setData(CalendarContract.Events.CONTENT_URI)
+            .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, start.toInstant().toEpochMilli())
+            .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, end.toInstant().toEpochMilli())
+            .putExtra(CalendarContract.EXTRA_EVENT_ALL_DAY, hit.time == null)
+            .putExtra(CalendarContract.Events.TITLE, hit.title)
+            .putExtra(CalendarContract.Events.DESCRIPTION, memo.text.trim())
+        memo.calKey = hit.key
+        refreshPreview()
+        try {
+            startActivity(Intent(i).setPackage("com.google.android.calendar"))
+        } catch (e: ActivityNotFoundException) {
+            try {
+                startActivity(i)
+            } catch (e: ActivityNotFoundException) {
+                Toast.makeText(this, "カレンダーアプリが見つかりません", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     // ---------- 保存・削除 ----------
 
     private fun isDirty() = memo.toJson().toString() != original
@@ -454,6 +493,7 @@ class EditActivity : ComponentActivity() {
     }
 
     private fun proceed() {
+        val hit = DateFinder.find(memo.text)
         when {
             memo.showsOverlay && !Settings.canDrawOverlays(this) && !askedOverlay -> {
                 askedOverlay = true
@@ -479,6 +519,24 @@ class EditActivity : ComponentActivity() {
                     Toast.makeText(this, "ホーム画面を長押し →「ウィジェット」→「画面メモ」を追加してください", Toast.LENGTH_LONG).show()
                 }
                 proceed()
+            }
+            hit != null && hit.key != memo.calKey && !askedCalendar -> {
+                askedCalendar = true
+                AlertDialog.Builder(this)
+                    .setTitle("📅 Googleカレンダーにも登録しますか？")
+                    .setMessage("${hit.label}\n${hit.title}")
+                    .setPositiveButton("登録する") { _, _ ->
+                        addToCalendar(hit)
+                        MemoStore.update(this, memo.id) { it.calKey = hit.key }
+                        proceed()
+                    }
+                    .setNegativeButton("しない") { _, _ ->
+                        memo.calKey = hit.key
+                        MemoStore.update(this, memo.id) { it.calKey = hit.key }
+                        proceed()
+                    }
+                    .setCancelable(false)
+                    .show()
             }
             else -> {
                 Display.refresh(this)

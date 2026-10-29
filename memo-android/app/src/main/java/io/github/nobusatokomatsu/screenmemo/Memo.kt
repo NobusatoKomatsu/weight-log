@@ -25,6 +25,8 @@ data class Memo(
     var dx: Int = 0,
     var dy: Int = 0,
     var passThrough: Boolean = false,
+    /** カレンダーに登録した (または登録しないと答えた) 予定の目印 */
+    var calKey: String = "",
 ) {
     val col get() = pos % 3
     val row get() = pos / 3
@@ -47,6 +49,7 @@ data class Memo(
         .put("color", color).put("bg", bg).put("bold", bold)
         .put("on", on).put("overlay", overlay).put("widget", widget).put("notify", notify)
         .put("pos", pos).put("dx", dx).put("dy", dy).put("passThrough", passThrough)
+        .put("calKey", calKey)
 
     companion object {
         val POS_LABELS = listOf("左上", "上", "右上", "左", "中央", "右", "左下", "下", "右下")
@@ -66,6 +69,7 @@ data class Memo(
             dx = o.optInt("dx"),
             dy = o.optInt("dy"),
             passThrough = o.optBoolean("passThrough"),
+            calKey = o.optString("calKey"),
         )
     }
 }

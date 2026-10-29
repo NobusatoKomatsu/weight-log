@@ -34,7 +34,7 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           VERSION_CODE: ${{ github.run_number }}
         run: |
-          gradle -p memo-android assembleRelease --no-daemon
+          gradle -p memo-android testReleaseUnitTest assembleRelease --no-daemon
           cp memo-android/app/build/outputs/apk/release/app-release.apk screen-memo.apk
 
       # main 以外のブランチでは、試せるように Actions の成果物として残す

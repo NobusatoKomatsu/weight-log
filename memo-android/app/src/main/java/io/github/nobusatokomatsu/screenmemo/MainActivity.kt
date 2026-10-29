@@ -120,7 +120,7 @@ class MainActivity : ComponentActivity() {
         list.removeAllViews()
         if (memos.isEmpty()) {
             list.addView(TextView(this).apply {
-                text = "まだメモがありません。\n下の「＋ 新しいメモ」から作りましょう。\n\n・文字の大きさや色を選べます\n・🎤 音声でも入力できます\n・画面の上 / ホーム画面 / ロック画面 から表示先を選べます\n・用が済んだら、画面の上のメモは長押し、通知は「済み」で消せます\n・アイコン長押しで「新しいメモ」「音声でメモ」"
+                text = "まだメモがありません。\n下の「＋ 新しいメモ」から作りましょう。\n\n・文字の大きさや色を選べます\n・🎤 音声でも入力できます\n・「明日15時 歯医者」のように日付を書くと、Googleカレンダーに追加できます\n・画面の上 / ホーム画面 / ロック画面 から表示先を選べます\n・用が済んだら、画面の上のメモは長押し、通知は「済み」で消せます\n・アイコン長押しで「新しいメモ」「音声でメモ」"
                 textSize = 15f
                 setLineSpacing(0f, 1.4f)
                 setTextColor(Color.parseColor("#6B7280"))
