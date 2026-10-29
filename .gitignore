@@ -2,3 +2,6 @@ android/.gradle/
 android/build/
 android/app/build/
 *.p12
+memo-android/.gradle/
+memo-android/build/
+memo-android/app/build/
