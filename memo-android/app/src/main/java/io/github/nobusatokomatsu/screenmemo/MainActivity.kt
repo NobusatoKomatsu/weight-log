@@ -26,6 +26,7 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val ACTION_NEW = "io.github.nobusatokomatsu.screenmemo.NEW"
         const val ACTION_VOICE = "io.github.nobusatokomatsu.screenmemo.VOICE"
+        const val PRIVACY_URL = "https://sixpac.jp/memo/privacy.html"
     }
 
     private lateinit var list: LinearLayout
@@ -130,6 +131,16 @@ class MainActivity : ComponentActivity() {
         }
         memos.forEach { list.addView(row(it)) }
         list.addView(calendarSetting())
+        list.addView(TextView(this).apply {
+            text = "プライバシーポリシー"
+            textSize = 13f
+            setTextColor(Color.parseColor("#6B7280"))
+            paintFlags = paintFlags or android.graphics.Paint.UNDERLINE_TEXT_FLAG
+            setPadding(dp(4), dp(20), dp(4), dp(8))
+            setOnClickListener {
+                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_URL))) }
+            }
+        })
     }
 
     /** 日付のあるメモを、どのカレンダーに追加するか (Google / Outlook = Microsoft 365) */

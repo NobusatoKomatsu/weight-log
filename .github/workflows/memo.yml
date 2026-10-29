@@ -34,14 +34,18 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           VERSION_CODE: ${{ github.run_number }}
         run: |
-          gradle -p memo-android testReleaseUnitTest assembleRelease --no-daemon
+          gradle -p memo-android testReleaseUnitTest assembleRelease bundleRelease --no-daemon
           cp memo-android/app/build/outputs/apk/release/app-release.apk screen-memo.apk
+          # Google Play に提出するのは AAB
+          cp memo-android/app/build/outputs/bundle/release/app-release.aab screen-memo.aab
 
       # main 以外のブランチでは、試せるように Actions の成果物として残す
       - uses: actions/upload-artifact@v4
         with:
           name: screen-memo-apk
-          path: screen-memo.apk
+          path: |
+            screen-memo.apk
+            screen-memo.aab
 
       - name: Publish to release "memo"
         if: github.ref == 'refs/heads/main'
@@ -51,5 +55,5 @@ jobs:
           gh release view memo >/dev/null 2>&1 || gh release create memo \
             --title "画面メモ Androidアプリ" \
             --notes "screen-memo.apk をダウンロードしてインストールしてください。"
-          gh release upload memo screen-memo.apk --clobber
-          gh release edit memo --notes "screen-memo.apk をダウンロードしてインストールしてください。（ビルド ${{ github.run_number }}）"
+          gh release upload memo screen-memo.apk screen-memo.aab --clobber
+          gh release edit memo --notes "screen-memo.apk をダウンロードしてインストールしてください。Google Play には screen-memo.aab を提出します。（ビルド ${{ github.run_number }}）"
