@@ -9,7 +9,7 @@ Play Console に入力する内容と、手順をまとめています。上か�
 | 提出するアプリ (AAB) | [Releases の memo](https://github.com/NobusatoKomatsu/weight-log/releases/tag/memo) の `screen-memo.aab`（`main` に入れるたび自動で作り直されます） |
 | アプリのアイコン 512×512 | `memo-android/store/icon-512.png` |
 | フィーチャーグラフィック 1024×500 | `memo-android/store/feature-graphic-1024x500.png` |
-| 公式サイト | https://memoru.info （中身はリポジトリの `memoru-site/`。公開方法は下の「1.5 公式サイトとメール」） |
+| 公式サイト | https://memoru.info （中身はリポジトリの `memoru-site/public/`。公開方法は下の「1.5 公式サイトとメール」） |
 | プライバシーポリシー | https://memoru.info/privacy |
 | データの削除 | https://memoru.info/delete |
 | 問い合わせ用メール | support@memoru.info |
@@ -27,15 +27,24 @@ Play Console に入力する内容と、手順をまとめています。上か�
 
 ## 1.5 公式サイトとメール（memoru.info）
 
-通知パージ（notification.sucks）と同じく Cloudflare で公開する想定です。
+通知パージ（notification.sucks）と同じく、Cloudflare の Workers で公開します。サイトの中身は `memoru-site/public/`、設定は `memoru-site/wrangler.jsonc` です。
 
-**サイト**（Cloudflare Pages）
-1. Cloudflare のダッシュボード →「Workers & Pages」→「作成」→「Pages」→「Git に接続」で `NobusatoKomatsu/weight-log` を選ぶ
-2. ビルドの設定：フレームワーク「なし」、ビルドコマンドは空、**ビルド出力ディレクトリ `memoru-site`**、本番ブランチ `main`
-3. 「カスタムドメイン」に `memoru.info` を追加
-4. https://memoru.info/privacy と https://memoru.info/delete が開けることを確認（`.html` なしの URL で開けます）
+**① memoru.info を Cloudflare に追加**
+1. Cloudflare の左メニュー「ドメイン」→「ドメインを追加」→ `memoru.info` → プランは Free
+2. 表示された 2 つのネームサーバーを、memoru.info を取得したサービス（お名前.com など）の管理画面で設定する
+3. 「アクティブ」になるまで待つ（数分〜数時間）
 
-**メール**（Cloudflare Email Routing）
+**② サイトを公開（Workers）**
+1. 左メニュー「コンピュート」→「Workers & Pages」→「作成」→「Git リポジトリをインポート」→ `NobusatoKomatsu/weight-log`
+2. 設定：
+   - プロジェクト名：`memoru-info`
+   - 本番ブランチ：`main`
+   - **ルートディレクトリ（パス）：`memoru-site`**
+   - ビルドコマンド：空のまま　／　デプロイコマンド：`npx wrangler deploy`
+3. デプロイ後、Worker の「設定」→「ドメインとルート」→「追加」→「カスタムドメイン」→ `memoru.info`
+4. （任意）「設定」→「ビルド」→「ビルドの監視パス」を `memoru-site/*` にすると、アプリだけ変えたときに無駄なデプロイが走りません
+
+**③ メール**
 - `memoru.info` の「メール」→「Email Routing」で `support@memoru.info` を作り、普段読んでいるアドレスへ転送
 
 ## 2. アプリを作成
