@@ -7,6 +7,8 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.text.TextUtils
 import android.view.Gravity
@@ -32,6 +34,16 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var list: LinearLayout
     private lateinit var banners: LinearLayout
+    private lateinit var undoBar: LinearLayout
+    private lateinit var undoText: TextView
+
+    // スワイプで削除したあと 10 秒間だけ「元に戻す」を出す (Gmail のアーカイブと同じ)
+    private val handler = Handler(Looper.getMainLooper())
+    private var undo: (() -> Unit)? = null
+    private val hideUndo = Runnable {
+        undoBar.visibility = View.GONE
+        undo = null
+    }
 
     private val notifPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
         if (!ok) openNotificationSettings()
@@ -71,16 +83,69 @@ class MainActivity : ComponentActivity() {
             startActivity(EditActivity.intent(this, -1L))
         }
 
+        undoText = TextView(this).apply {
+            textSize = 14f
+            setTextColor(Color.WHITE)
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+        }
+        undoBar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            background = roundRect(Color.parseColor("#1F2937"), dp(12).toFloat())
+            setPadding(dp(16), dp(4), dp(4), dp(4))
+            visibility = View.GONE
+            addView(undoText, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(TextView(this@MainActivity).apply {
+                text = "元に戻す"
+                textSize = 15f
+                setTextColor(Color.parseColor("#FBBF24"))
+                setTypeface(typeface, android.graphics.Typeface.BOLD)
+                setPadding(dp(16), dp(12), dp(16), dp(12))
+                setOnClickListener {
+                    undo?.invoke()
+                    handler.removeCallbacks(hideUndo)
+                    hideUndo.run()
+                }
+            })
+        }
+
         setContentView(LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             padForSystemBars()
             addView(ScrollView(this@MainActivity).apply { addView(content) },
                 LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
+            addView(undoBar, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                setMargins(dp(16), dp(8), dp(16), 0)
+            })
             addView(add, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 setMargins(dp(16), dp(8), dp(16), dp(16))
             })
         })
         if (savedInstanceState == null) handleShortcut(intent)
+    }
+
+    override fun onDestroy() {
+        handler.removeCallbacks(hideUndo)
+        super.onDestroy()
+    }
+
+    /** すぐに削除し、10 秒間は「元に戻す」で同じ位置に戻せるようにする */
+    private fun deleteWithUndo(m: Memo) {
+        val index = MemoStore.load(this).indexOfFirst { it.id == m.id }
+        MemoStore.delete(this, m.id)
+        Display.refresh(this)
+        render()
+        val name = m.text.trim().lines().first()
+        undoText.text = "「${if (name.length > 14) name.take(14) + "…" else name}」を削除しました"
+        undo = {
+            MemoStore.insert(this, m, index)
+            Display.refresh(this)
+            render()
+        }
+        undoBar.visibility = View.VISIBLE
+        handler.removeCallbacks(hideUndo)
+        handler.postDelayed(hideUndo, 10_000)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -123,7 +188,7 @@ class MainActivity : ComponentActivity() {
         list.removeAllViews()
         if (memos.isEmpty()) {
             list.addView(TextView(this).apply {
-                text = "まだメモがありません。\n下の「＋ 新しいメモ」から作りましょう。\n\n・文字の大きさや色を選べます\n・🎤 音声でも入力できます\n・「明日15時 歯医者」のように日付を書くと、Googleカレンダー・Outlook（Microsoft 365）に追加できます\n・画面の上 / ホーム画面 / ロック画面 から表示先を選べます\n・用が済んだら、画面の上のメモは長押し、通知は「済み」で消せます\n・アイコン長押しで「新しいメモ」「音声でメモ」"
+                text = "まだメモがありません。\n下の「＋ 新しいメモ」から作りましょう。\n\n・文字の大きさや色を選べます\n・🎤 音声でも入力できます\n・「明日15時 歯医者」のように日付を書くと、Googleカレンダー・Outlook（Microsoft 365）に追加できます\n・画面の上 / ホーム画面 / ロック画面 から表示先を選べます\n・用が済んだら、画面の上のメモは長押し、通知は「済み」で消せます\n・いらなくなったメモは、一覧で左右にスワイプして削除（10 秒間は元に戻せます）\n・アイコン長押しで「新しいメモ」「音声でメモ」"
                 textSize = 15f
                 setLineSpacing(0f, 1.4f)
                 setTextColor(Color.parseColor("#6B7280"))
@@ -197,15 +262,17 @@ class MainActivity : ComponentActivity() {
                 render()
             }
         }
-        return LinearLayout(this).apply {
+        left.alpha = if (m.on) 1f else 0.55f
+        val card = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             background = roundRect(Color.WHITE, dp(16).toFloat())
             setPadding(dp(12), dp(12), dp(12), dp(12))
-            alpha = if (m.on) 1f else 0.55f
             setOnClickListener { startActivity(EditActivity.intent(this@MainActivity, m.id)) }
             addView(left, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
             addView(toggle)
+        }
+        return SwipeRow(this, card) { deleteWithUndo(m) }.apply {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = dp(12)
             }

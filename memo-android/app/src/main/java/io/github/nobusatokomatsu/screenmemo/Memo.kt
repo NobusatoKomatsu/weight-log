@@ -101,6 +101,14 @@ object MemoStore {
         list.find { it.id == id }?.let { change(it); saveAll(ctx, list) }
     }
 
+    /** 削除を取り消したとき、元の位置に戻す */
+    fun insert(ctx: Context, memo: Memo, index: Int) {
+        val list = load(ctx)
+        if (list.any { it.id == memo.id }) return
+        list.add(index.coerceIn(0, list.size), memo)
+        saveAll(ctx, list)
+    }
+
     fun delete(ctx: Context, id: Long) = saveAll(ctx, load(ctx).filterNot { it.id == id })
 
     private fun saveAll(ctx: Context, list: List<Memo>) {
