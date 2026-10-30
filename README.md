@@ -36,4 +36,6 @@ AiLink などが Health Connect に書き込んだ体重・体脂肪率を、ア
 
 はじめて「画面の上」に表示するときは「他のアプリの上に重ねて表示」の許可、「ロック画面・通知欄」には通知の許可が必要です（アプリが案内します）。
 
+公式サイト（https://memoru.info）の中身は `memoru-site/` にあります。
+
 Google Play への申請手順と、入力する文章は [memo-android/store/README.md](memo-android/store/README.md) にあります。

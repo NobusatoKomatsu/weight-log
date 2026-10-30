@@ -7,7 +7,7 @@
         android:shortcutShortLabel="@string/shortcut_new">
         <intent
             android:action="io.github.nobusatokomatsu.screenmemo.NEW"
-            android:targetPackage="io.github.nobusatokomatsu.screenmemo"
+            android:targetPackage="info.memoru.app"
             android:targetClass="io.github.nobusatokomatsu.screenmemo.MainActivity" />
     </shortcut>
     <shortcut
@@ -17,7 +17,7 @@
         android:shortcutShortLabel="@string/shortcut_voice">
         <intent
             android:action="io.github.nobusatokomatsu.screenmemo.VOICE"
-            android:targetPackage="io.github.nobusatokomatsu.screenmemo"
+            android:targetPackage="info.memoru.app"
             android:targetClass="io.github.nobusatokomatsu.screenmemo.MainActivity" />
     </shortcut>
 </shortcuts>
