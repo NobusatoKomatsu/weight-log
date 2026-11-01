@@ -58,7 +58,7 @@ Twilio の Verify サービス（名前「みんなの声」）も無ければ�
    | `TWILIO_VERIFY_SID`（任意） | 既存の Verify サービスを使う場合だけ |
 
 4. main に取り込む（または Actions 画面から「みんなの声 を Cloudflare に公開」を手動実行）。
-   公開先は `https://minnano-koe.<あなたのサブドメイン>.workers.dev`。独自ドメインは Cloudflare の Workers 設定で追加できる
+   公開先は `https://election.support`（`wrangler.jsonc` の `routes`）。ドメインを先に同じ Cloudflare アカウントへ追加し、ネームサーバーを切り替えておくこと
 
 ## 手で公開する場合
 

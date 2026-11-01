@@ -3,6 +3,8 @@
   "name": "minnano-koe",
   "main": "src/worker.js",
   "compatibility_date": "2026-10-01",
+  // election.support で公開する（ドメインが同じ Cloudflare アカウントに追加済みであること）
+  "routes": [{ "pattern": "election.support", "custom_domain": true }],
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
