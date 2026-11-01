@@ -83,6 +83,9 @@ async function phoneHash(env, e164) {
 const devSms = (env) => env.SMS_DEV_MODE === '1';
 
 async function twilio(env, path, params) {
+  if (!env.TWILIO_ACCOUNT_SID || !env.TWILIO_AUTH_TOKEN || !env.TWILIO_VERIFY_SID) {
+    throw new Error('Twilio の設定（TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_VERIFY_SID）がありません');
+  }
   const res = await fetch(`https://verify.twilio.com/v2/Services/${env.TWILIO_VERIFY_SID}/${path}`, {
     method: 'POST',
     headers: {

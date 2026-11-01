@@ -37,7 +37,30 @@ Cloudflare Workers（画面と API）と Cloudflare D1（データベース）�
 | `/#/me` | 持ち票・投票履歴・プロフィール・退会 |
 | `/#/admin` | テーマ作成、CSV 書き出し（管理者トークンが必要） |
 
-## 公開手順
+## 公開手順（GitHub Actions で自動）
+
+`.github/workflows/vote-site.yml` が、D1 の作成・テーブル作成・公開・秘密の値の登録まで行います。
+Twilio の Verify サービス（名前「みんなの声」）も無ければ自動で作ります。
+
+1. **Cloudflare の API トークンを作る**：ダッシュボード → My Profile → API Tokens → Create Token →
+   テンプレート「Edit Cloudflare Workers」を選び、権限に **Account / D1 / Edit** を追加して作成
+2. **Twilio 側の準備**：トライアルなら有料に切り替える。Verify → Settings → Geo permissions で **Japan** を有効にする
+3. **GitHub の Secrets に登録**（リポジトリ → Settings → Secrets and variables → Actions → New repository secret）
+
+   | 名前 | 中身 |
+   |---|---|
+   | `CLOUDFLARE_API_TOKEN` | 1 で作ったトークン |
+   | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare ダッシュボードの Workers 画面右側に出る Account ID |
+   | `TWILIO_ACCOUNT_SID` | Twilio コンソールの Account SID（AC...） |
+   | `TWILIO_AUTH_TOKEN` | Twilio コンソールの Auth Token |
+   | `VOTE_ADMIN_TOKEN` | 管理画面のパスワード（長いランダム文字列） |
+   | `VOTE_PHONE_PEPPER` | 電話番号を HMAC する鍵（長いランダム文字列。**一度決めたら変えない・別に控えておく**） |
+   | `TWILIO_VERIFY_SID`（任意） | 既存の Verify サービスを使う場合だけ |
+
+4. main に取り込む（または Actions 画面から「みんなの声 を Cloudflare に公開」を手動実行）。
+   公開先は `https://minnano-koe.<あなたのサブドメイン>.workers.dev`。独自ドメインは Cloudflare の Workers 設定で追加できる
+
+## 手で公開する場合
 
 ```sh
 cd vote-site
