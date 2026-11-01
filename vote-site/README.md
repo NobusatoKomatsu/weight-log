@@ -15,14 +15,24 @@ Cloudflare Workers（画面と API）と Cloudflare D1（データベース）�
 ## 集める情報
 
 生まれた年（年代で集計）・性別・年収帯・年金の受給有無のみ。ログインには ID とパスワードを使い、
-氏名やメールアドレスは聞きません。投票時の属性は票と一緒に記録するので、あとでプロフィールを変えても過去の集計は変わりません。
+氏名やメールアドレスは聞きません。
+
+## 1 人 1 アカウント（SMS 認証）
+
+- 登録時に携帯電話番号（070・080・090 のみ）へ SMS で認証コードを送り、1 番号 1 アカウントに限る
+- 電話番号そのものは保存せず、秘密の鍵（`PHONE_PEPPER`）で HMAC した値だけを保存する
+- 退会しても HMAC 値は残す。同じ番号で登録し直すと持ち票と投票履歴を引き継ぐので、退会→再登録で二重投票はできない
+- パスワードやログインIDを忘れたら、SMS で本人確認して再設定できる（`/#/reset`）
+- SMS の乱用で費用がかさまないよう、送信回数を IP ごと（1 時間 5 回）とサイト全体（1 日 500 回）で制限
+- SMS の送信と照合は [Twilio Verify](https://www.twilio.com/docs/verify) を使う投票時の属性は票と一緒に記録するので、あとでプロフィールを変えても過去の集計は変わりません。
 
 ## 画面
 
 | URL | 内容 |
 |---|---|
 | `/#/` | テーマ一覧 |
-| `/#/register` `/#/login` | アカウント作成・ログイン |
+| `/#/register` `/#/login` | アカウント作成（SMS 認証）・ログイン |
+| `/#/reset` | パスワードの再設定（SMS 認証） |
 | `/#/poll/<番号>` | 投票と結果（5 秒ごとに自動更新） |
 | `/#/me` | 持ち票・投票履歴・プロフィール・退会 |
 | `/#/admin` | テーマ作成、CSV 書き出し（管理者トークンが必要） |
@@ -35,6 +45,10 @@ npx wrangler login
 npx wrangler d1 create minnano-koe          # 表示された database_id を wrangler.jsonc に書く
 npx wrangler d1 execute minnano-koe --remote --file=schema.sql
 npx wrangler secret put ADMIN_TOKEN          # 管理画面用の長いランダム文字列
+npx wrangler secret put PHONE_PEPPER         # 電話番号を HMAC する長いランダム文字列（一度決めたら変えない）
+npx wrangler secret put TWILIO_ACCOUNT_SID   # Twilio コンソールの Account SID
+npx wrangler secret put TWILIO_AUTH_TOKEN    # Twilio コンソールの Auth Token
+npx wrangler secret put TWILIO_VERIFY_SID    # Verify → Services で作ったサービスの SID（VA...）
 npx wrangler deploy
 ```
 
@@ -42,7 +56,8 @@ npx wrangler deploy
 
 ```sh
 cd vote-site
-echo 'ADMIN_TOKEN=test-admin' > .dev.vars
+# SMS_DEV_MODE=1 だと SMS を送らず、認証コード 000000 で通る（本番では設定しない）
+printf 'ADMIN_TOKEN=test-admin\nPHONE_PEPPER=dev-pepper\nSMS_DEV_MODE=1\n' > .dev.vars
 npx wrangler d1 execute minnano-koe --local --file=schema.sql
 npx wrangler dev
 ```
@@ -54,8 +69,9 @@ npx wrangler dev
 
 ## 注意（本番前に検討すること）
 
-- **1 人 1 アカウントは保証できない**：ID とパスワードだけなので、複数アカウントで票を増やせてしまう。
-  本気で「1 人 1 票」にするには、マイナンバーカードの公的個人認証や SMS 認証などの本人確認が必要。
+- **SMS 認証でも完全な 1 人 1 票ではない**：複数の携帯番号（SMS 付きデータ SIM など）を持つ人は複数アカウントを作れる。
+  さらに厳密にするならマイナンバーカードの公的個人認証（JPKI）が必要。
+- SMS は 1 通ごとに費用がかかる（Twilio Verify の認証料 + 日本向け SMS 料金）。最新の料金は Twilio の料金ページで確認。
+- `PHONE_PEPPER` をなくしたり変えたりすると、既存の番号と照合できなくなる。安全な場所に控えておく。
 - ログイン試行の回数制限がない（Cloudflare の Rate Limiting ルールで追加できる）。
-- パスワードを忘れると復旧できない（メールアドレスを聞かない設計のため）。
 - 結果の自動更新は 5 秒ごとの再読み込み。利用者が増えたら結果を数秒キャッシュするとよい。
