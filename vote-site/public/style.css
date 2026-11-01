@@ -128,3 +128,11 @@ td.m { color: var(--minus); }
 @media (prefers-reduced-motion: reduce) { .live::before { animation: none; } }
 
 .foot { color: var(--muted); font-size: .85rem; padding-bottom: 32px; }
+
+/* スマホ幅では属性別の表を詰めて、選択肢 3 つ程度なら横スクロールなしで収める */
+@media (max-width: 480px) {
+  table { font-size: .82rem; }
+  th, td { padding: 7px 4px; }
+  th { white-space: normal; vertical-align: bottom; }
+  td:first-child { white-space: normal; }
+}
