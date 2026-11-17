@@ -315,7 +315,7 @@ function apply() {
   renderChips();
   updateControls();
   writeUrl();
-  if (map && state.view === 'map') renderMarkers();
+  if (map && state.view === 'map') renderMarkers(true);
 }
 
 function updateControls() {
@@ -395,7 +395,7 @@ function cardMeta(s) {
   return a.filter(Boolean).join(' ・ ');
 }
 function cardHtml(s) {
-  const img = s.img ? `<img loading="lazy" decoding="async" src="${thumb(s.img, 330)}" alt="" />` : placeholder(s);
+  const img = placeholder(s) + (s.img ? `<img loading="lazy" decoding="async" src="${thumb(s.img, 330)}" alt="" />` : '');
   const m = cardMeta(s);
   return `<a class="card t-${s.t}" href="#${s.id}">
     <div class="thumb">${img}<span class="badge">${TYPES[s.t]}</span></div>
@@ -408,16 +408,12 @@ function renderMore() {
   $('grid').insertAdjacentHTML('beforeend', next.map(cardHtml).join(''));
   shown += next.length;
 }
-// 画像が読めなかったら名前入りの枠に差し替える
+// 読めなかった写真は取り除く（下に敷いてある名前入りの枠が見える）
 document.addEventListener('error', (e) => {
-  const img = e.target;
-  if (!(img instanceof HTMLImageElement)) return;
-  const holder = img.closest('.thumb, .mt, .hero-img');
-  if (holder && !holder.querySelector('.ph')) {
-    const s = byId.get((img.closest('[href^="#Q"]')?.getAttribute('href') || '').slice(1)) || byId.get(location.hash.slice(1));
-    img.insertAdjacentHTML('afterend', s ? placeholder(s) : '<div class="ph"></div>');
+  if (e.target instanceof HTMLImageElement && e.target.closest('.thumb, .mt, .hero-img, .gallery, .post-media')) {
+    const link = e.target.closest('.gallery a, .post-media a');
+    (link || e.target).remove();
   }
-  img.remove();
 }, true);
 new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting) && state.view === 'list') renderMore(); }, { rootMargin: '900px' }).observe($('sentinel'));
 
@@ -469,12 +465,12 @@ async function openMap() {
       if (state.bbox) apply();
     });
     state.bounds = map.getBounds();
-    if (state.near) map.setView([state.near.lat, state.near.lon], 6);
   }
-  setTimeout(() => { map.invalidateSize(); renderMarkers(); }, 30);
+  setTimeout(() => { map.invalidateSize(); renderMarkers(true); }, 30);
 }
-function renderMarkers() {
+function renderMarkers(fit = false) {
   markerLayer.clearLayers();
+  const near = state.near;
   // 同じ場所の石は 1 つの点にまとめる
   const places = new Map();
   let n = 0;
@@ -482,6 +478,8 @@ function renderMarkers() {
     if (!s.pts.length) continue;
     n++;
     for (const p of s.pts) {
+      if (state.c && p.c !== state.c) continue;
+      if (near && distanceKm(near.lat, near.lon, p.lat, p.lon) > state.radius) continue;
       const key = p.lat.toFixed(3) + ',' + p.lon.toFixed(3);
       let g = places.get(key);
       if (!g) places.set(key, (g = { lat: p.lat, lon: p.lon, name: p.n, country: p.c, items: [] }));
@@ -500,6 +498,9 @@ function renderMarkers() {
   }
   if (nearMarker) { nearMarker.remove(); nearMarker = null; }
   if (state.near) nearMarker = L.circle([state.near.lat, state.near.lon], { radius: state.radius * 1000, color: '#14866d', weight: 1.5, fillOpacity: 0.05, interactive: false }).addTo(map);
+  if (fit && !state.bbox && places.size && places.size < 2500) {
+    map.fitBounds(L.latLngBounds([...places.values()].map((g) => [g.lat, g.lon])).pad(0.15), { maxZoom: 9, animate: false });
+  }
   $('mapCount').innerHTML = `<b>${fmt(n)}</b> 件を <b>${fmt(places.size)}</b> か所に表示（絞り込み結果 ${fmt(filtered.length)} 件のうち、位置が分かるもの）`;
 }
 function useNear() {
@@ -517,9 +518,11 @@ function useNear() {
 
 // ---------- 詳細 ----------
 function miniHtml(s, note) {
-  return `<a class="mini t-${s.t}" href="#${s.id}"><div class="mt">${s.img ? `<img loading="lazy" src="${thumb(s.img, 120)}" alt="" />` : placeholder(s)}</div><div><b>${esc(s.name)}</b><small>${esc(note || s.sub || TYPES[s.t])}</small></div></a>`;
+  return `<a class="mini t-${s.t}" href="#${s.id}"><div class="mt">${placeholder(s)}${s.img ? `<img loading="lazy" src="${thumb(s.img, 120)}" alt="" />` : ''}</div><div><b>${esc(s.name)}</b><small>${esc(note || s.sub || TYPES[s.t])}</small></div></a>`;
 }
 const fact = (label, value, small) => (value ? `<div class="fact"><dt>${label}</dt><dd>${value}${small ? `<small>${small}</small>` : ''}</dd></div>` : '');
+
+const explainHtml = ([t, d]) => `<div><b>${esc(t)}</b><span>${esc(d)}</span></div>`;
 
 function openDetail(s) {
   $('dTitle').textContent = s.name;
@@ -553,7 +556,7 @@ function openDetail(s) {
     for (const e of s.env || []) if (EXPLAIN[e]) explains.push([e, EXPLAIN[e]]);
   }
   const originNote = s.t === 'm' && s.env ? '英語版 Wikipedia の記事に出てくる言葉から自動で拾っています' : '';
-  const origin = explains.length ? `<section class="sec"><h3>できかた${originNote ? `<small>${originNote}</small>` : ''}</h3><div class="explain">${explains.map(([t, d]) => `<div><b>${esc(t)}</b><span>${esc(d)}</span></div>`).join('')}</div></section>` : '';
+  const origin = explains.length ? `<section class="sec"><h3>できかた${originNote ? `<small>${originNote}</small>` : ''}</h3><div class="explain">${explains.slice(0, 4).map(explainHtml).join('')}</div>${explains.length > 4 ? `<details class="more-explain"><summary>ほか ${explains.length - 4} 件のできかたを見る</summary><div class="explain">${explains.slice(4).map(explainHtml).join('')}</div></details>` : ''}</section>` : '';
   const chem = s.t === 'm' && s.sc && CLASS_EXPLAIN[s.sc] ? `<p class="desc"><b>${esc(s.sc)}</b>: ${esc(CLASS_EXPLAIN[s.sc])}</p>` : '';
 
   // 元素
@@ -602,7 +605,7 @@ function openDetail(s) {
 
   $('dBody').innerHTML = `
     <div class="hero">
-      <figure class="hero-img t-${s.t}">${s.img ? `<img src="${thumb(s.img, 960)}" alt="${esc(s.name)}の写真" /><figcaption><a href="${filePage(s.img)}" target="_blank" rel="noopener">写真の作者・ライセンス</a></figcaption>` : placeholder(s)}</figure>
+      <figure class="hero-img t-${s.t}">${placeholder(s)}${s.img ? `<img src="${thumb(s.img, 960)}" alt="${esc(s.name)}の写真" /><figcaption><a href="${filePage(s.img)}" target="_blank" rel="noopener">写真の作者・ライセンス</a></figcaption>` : ''}</figure>
       <div class="hero-info">
         ${s.f ? `<p class="formula-big">${esc(s.f)}</p>` : ''}
         ${s.d ? `<p class="desc">${esc(s.d)}</p>` : ''}
@@ -665,7 +668,7 @@ async function loadWiki(s, alive) {
       if (!text) continue;
       if (!alive()) return;
       const paras = text.split(/\n+/).filter(Boolean).slice(0, 4);
-      $('dWiki').innerHTML = `${lang === 'en' ? '<p class="muted">日本語版の記事が無いため、英語版を表示しています。</p>' : ''}${paras.map((p) => `<p>${esc(p)}</p>`).join('')}<p class="more"><a href="https://${lang}.wikipedia.org/wiki/${enc(title)}" target="_blank" rel="noopener">Wikipedia で続きを読む</a></p>`;
+      $('dWiki').innerHTML = `${lang === 'en' ? `<p class="muted">${s.wj ? '日本語版を取得できなかったため' : '日本語版の記事が無いため'}、英語版を表示しています。</p>` : ''}${paras.map((p) => `<p>${esc(p)}</p>`).join('')}<p class="more"><a href="https://${lang}.wikipedia.org/wiki/${enc(title)}" target="_blank" rel="noopener">Wikipedia で続きを読む</a></p>`;
       return;
     } catch (e) {
       console.warn('wikipedia', e);
@@ -745,15 +748,19 @@ function postHtml(p) {
       <div class="post-foot"><span>${isNaN(d) ? '' : d.toLocaleDateString('ja-JP')}</span><a href="${esc(p.url)}" target="_blank" rel="noopener">元の投稿を開く</a></div>
     </div></article>`;
 }
+const STONE_CONTEXT = /mineral|crystal|gemstone|geolog|rockhound|meteorit|fossil|lapidar|jewel|\b(rocks?|stones?|quartz)\b|鉱物|結晶|標本|宝石|原石|天然石|岩石|水晶|隕石|地質|鉱山/i;
+const NOT_STONE = /rails|programming|coding|software|opensource|developer|webdev|python|javascript|golang|rustlang|linux|music|band\b|album/i; // 同じ名前の別の話題（言語の Ruby、音楽のロックなど）
 async function loadStonePosts(s, alive) {
   const tags = [s.ja, s.en].filter(Boolean);
   let posts = [];
   let failed = false;
-  try { posts = await fetchPosts(tags, 12); } catch (e) { failed = true; console.warn('mastodon', e); }
+  try {
+    posts = (await fetchPosts(tags, 40)).filter((p) => !NOT_STONE.test(p.tags.join(' ')) && STONE_CONTEXT.test(p.tags.join(' ') + ' ' + p.text.replace(/https?:\/\/\S+/g, '')));
+  } catch (e) { failed = true; console.warn('mastodon', e); }
   if (!alive()) return;
   $('dSns').outerHTML = posts.length
     ? `<div class="posts" id="dSns">${posts.slice(0, 9).map(postHtml).join('')}</div>`
-    : `<p class="muted" id="dSns">${failed ? '投稿を取得できませんでした。' : `「#${esc(cleanTag(tags[0] || ''))}」のタグがついた写真つきの投稿は、まだ見つかりませんでした。`}</p>`;
+    : `<p class="muted" id="dSns">${failed ? '投稿を取得できませんでした。' : `「#${esc(cleanTag(tags[0] || ''))}」のタグがついた石の写真の投稿は、見つかりませんでした。`}</p>`;
 }
 let snsTags = ['鉱物'];
 function openSns() {

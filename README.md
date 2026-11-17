@@ -18,9 +18,10 @@ AiLink などが Health Connect に書き込んだ体重・体脂肪率を、ア
 
 **https://sixpac.jp/stones/**
 
-世界中の鉱物・岩石・隕石を、名前・化学式・含まれる元素・結晶系・硬度・密度・色・できかた（成因）・産地（国や地図上の距離）・質量や大きさから、画像つきで一覧・検索できます。
+世界中の鉱物・岩石・隕石・名のある巨石（約 1 万 1 千件）を、写真つきで一覧・検索できる図鑑です。
 
-- 基礎データ: [Wikidata](https://www.wikidata.org/)（鉱物の化学式・結晶系・硬度・密度・色・模式産地と座標・発見年、岩石の成因分類、隕石の質量・寸法・落下地点）
-- 解説と写真: Wikipedia（日本語→英語）・Wikimedia Commons
-- SNS: Mastodon と Bluesky の公開投稿を画像つきで表示。X・Instagram・Reddit・Flickr・mindat.org へは検索リンクで移動
-- データは `stones/build-data.mjs` が Wikidata から取得して `stones/data/stones.json` に保存します（GitHub Actions「Stones data」が毎週自動更新。手動実行も可）。ファイルが無いときはブラウザが Wikidata から直接取得して端末内にキャッシュします。
+- 名前（日本語・英語）、化学式、含まれる元素、化学分類、結晶系、硬さ、密度、できかた、国、重さ・高さで絞り込み
+- 地図で産地・落下地点・所在地を表示。現在地の近くの石も探せます
+- 石ごとに、Wikipedia の解説、Wikimedia Commons の写真、Mastodon の投稿、Mindat などへのリンクを表示
+
+データは `stones/data/stones.json` に入っています。`node stones/tools/build-data.mjs` が Wikidata から作り直し、GitHub Actions「Stones data」が毎月 1 日に自動で更新します。
