@@ -1,7 +1,6 @@
 package io.github.nobusatokomatsu.appsweep
 
 import android.app.AlertDialog
-import android.content.Context
 import android.content.Intent
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
@@ -18,6 +17,7 @@ import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ListView
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -25,18 +25,22 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.WindowCompat
 import java.util.concurrent.Executors
 
+const val PRIVACY_URL = "https://sixpac.jp/sweep/privacy.html"
+
 class MainActivity : ComponentActivity() {
 
     private val io = Executors.newSingleThreadExecutor()
-    private val prefs by lazy { getSharedPreferences("sweep", Context.MODE_PRIVATE) }
 
     private var rows: List<AppRow> = emptyList()
     private var icons: Map<String, Drawable> = emptyMap()
     private var hasUsage = false
     private var loaded = false
     private var sort = Sort.UNUSED
-    /** 残すアプリ。ここに入っていないアプリが削除の対象 */
-    private val keep = HashSet<String>()
+    /**
+     * チェックを外した（削除する）アプリ。ここに入っていないアプリはすべて残す。
+     * 誤って消さないよう保存はしない。アプリを開き直すと、すべて「残す」に戻る
+     */
+    private val remove = HashSet<String>()
 
     // 連続削除の進み具合
     private val queue = ArrayDeque<String>()
@@ -50,6 +54,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var empty: TextView
     private lateinit var list: ListView
     private lateinit var deleteButton: TextView
+    private lateinit var resetChip: TextView
     private val sortChips = HashMap<Sort, TextView>()
     private val adapter = RowAdapter()
 
@@ -59,7 +64,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        keep += prefs.getStringSet("keep", emptySet()) ?: emptySet()
         setContentView(buildUi())
         render()
     }
@@ -110,18 +114,8 @@ class MainActivity : ComponentActivity() {
             }
         ))
 
-        val pick = ArrayList<View>()
-        pick += TextView(this).apply {
-            text = "最近使ったものを残す"
-            textSize = 13f
-            setTextColor(SUB)
-        }
-        for ((days, label) in listOf(30 to "1か月", 90 to "3か月", 180 to "半年", 365 to "1年")) {
-            pick += chip(label) { keepRecent(days, label) }
-        }
-        pick += chip("すべて残す") { setKeep(keep + rows.map { it.pkg }) }
-        pick += chip("すべて外す") { setKeep(emptySet()) }
-        root.addView(chipRow(pick))
+        resetChip = chip("すべて「残す」に戻す") { remove.clear(); render() }
+        root.addView(chipRow(listOf(resetChip)))
 
         list = ListView(this).apply {
             adapter = this@MainActivity.adapter
@@ -140,7 +134,7 @@ class MainActivity : ComponentActivity() {
         root.addView(empty, LinearLayout.LayoutParams(-1, 0, 1f))
 
         root.addView(TextView(this).apply {
-            text = "チェックを付けたアプリは残します。付けていないアプリはすべて削除します"
+            text = "はじめは全部「残す」です。いらないアプリだけ、タップしてチェックを外してください"
             textSize = 12f
             setTextColor(SUB)
             gravity = Gravity.CENTER
@@ -155,7 +149,16 @@ class MainActivity : ComponentActivity() {
             setPadding(dp(16), dp(15), dp(16), dp(15))
             setOnClickListener { confirmDelete() }
         }
-        root.addView(deleteButton, margins(dp(16), dp(8), dp(16), dp(12)))
+        root.addView(deleteButton, margins(dp(16), dp(8), dp(16), dp(4)))
+
+        root.addView(TextView(this).apply {
+            text = "プライバシーポリシー"
+            textSize = 12f
+            setTextColor(SUB)
+            gravity = Gravity.CENTER
+            setPadding(dp(16), dp(6), dp(16), dp(10))
+            setOnClickListener { openPrivacyPolicy() }
+        })
         return root
     }
 
@@ -205,18 +208,20 @@ class MainActivity : ComponentActivity() {
 
         summary.text = when {
             !loaded -> "調べています…"
-            else -> "削除できるアプリ ${rows.size}個 ・ 残す ${rows.count { it.pkg in keep }}個"
+            remove.isEmpty() -> "入れたアプリ ${rows.size}個 ・ すべて残します"
+            else -> "入れたアプリ ${rows.size}個 ・ 残す ${rows.size - remove.size}個 ・ 削除 ${remove.size}個"
         }
         val nothing = loaded && rows.isEmpty()
         empty.text = if (loaded) "削除できるアプリはありません" else "調べています…"
         empty.visibility = if (!loaded || nothing) View.VISIBLE else View.GONE
         list.visibility = if (!loaded || nothing) View.GONE else View.VISIBLE
 
-        val picked = rows.filter { it.pkg !in keep }
+        val picked = rows.filter { it.pkg in remove }
+        resetChip.visibility = if (picked.isEmpty()) View.INVISIBLE else View.VISIBLE
         deleteButton.text = when {
             !loaded -> "調べています…"
-            picked.isEmpty() -> "削除するアプリはありません"
-            else -> "残す以外の ${picked.size}個を削除（${sizeLabel(picked.sumOf { it.bytes })}）"
+            picked.isEmpty() -> "いらないアプリのチェックを外してください"
+            else -> "チェックを外した ${picked.size}個を削除（${sizeLabel(picked.sumOf { it.bytes })}）"
         }
         deleteButton.isEnabled = picked.isNotEmpty()
         deleteButton.background = roundRect(if (picked.isEmpty()) OFF else DANGER, dp(26).toFloat())
@@ -237,62 +242,110 @@ class MainActivity : ComponentActivity() {
                 icons = result.icons
                 hasUsage = result.hasUsage
                 loaded = true
+                // なくなったアプリの印は捨てる
+                remove.retainAll(rows.map { it.pkg }.toSet())
                 render()
             }
         }
     }
 
+    /** 許可の画面を開く前に、何を調べて何に使うのかを伝える */
     private fun openUsageSettings() {
+        AlertDialog.Builder(this)
+            .setTitle("使用状況へのアクセスについて")
+            .setMessage(
+                "許可すると、このアプリは次の情報を読み取ります。\n\n" +
+                    "・各アプリを最後に使った日時\n" +
+                    "・各アプリが使っている容量（本体・データ・キャッシュ）\n\n" +
+                    "これらは、どのアプリを使っていないかを一覧に表示するためだけに使います。" +
+                    "端末の外には送信せず、保存もしません（このアプリは通信を行いません）。\n\n" +
+                    "次の画面で「アプリ一掃」を選び、許可をオンにしてください。許可しなくてもアプリは使えます。"
+            )
+            .setPositiveButton("設定を開く") { _, _ ->
+                try {
+                    startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                } catch (e: Exception) {
+                    Toast.makeText(this, "設定 → アプリ → 特別なアプリアクセス → 使用状況へのアクセス から許可してください", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("許可しない", null)
+            .show()
+    }
+
+    private fun openPrivacyPolicy() {
         try {
-            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_URL)))
         } catch (e: Exception) {
-            Toast.makeText(this, "設定 → アプリ → 特別なアプリアクセス → 使用状況へのアクセス から許可してください", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, PRIVACY_URL, Toast.LENGTH_LONG).show()
         }
     }
 
     // ---------- 選ぶ ----------
 
     private fun toggle(row: AppRow) {
-        setKeep(if (row.pkg in keep) keep - row.pkg else keep + row.pkg)
-    }
-
-    private fun setKeep(pkgs: Set<String>) {
-        val copy = HashSet(pkgs)
-        keep.clear()
-        keep += copy
-        prefs.edit().putStringSet("keep", copy).apply()
+        if (current != null) return
+        if (!remove.remove(row.pkg)) remove += row.pkg
         render()
-    }
-
-    private fun keepRecent(days: Int, label: String) {
-        val found = recentPkgs(rows, days, System.currentTimeMillis())
-        setKeep(keep + found)
-        val note = if (hasUsage) "" else "（入れた日で判定）"
-        Toast.makeText(
-            this,
-            if (found.isEmpty()) "この${label}に使ったアプリはありません$note"
-            else "この${label}に使った ${found.size}個を「残す」にしました$note",
-            Toast.LENGTH_SHORT,
-        ).show()
     }
 
     // ---------- 削除 ----------
 
+    /**
+     * 削除の前の最終確認。消すアプリを省略せずに全部見せ、
+     * 「確認しました」にチェックを入れるまで削除のボタンを押せないようにする
+     */
     private fun confirmDelete() {
-        val picked = sortRows(rows, sort).filter { it.pkg !in keep }
-        val kept = rows.size - picked.size
+        if (current != null) return
+        val picked = sortRows(rows, Sort.NAME).filter { it.pkg in remove }
         if (picked.isEmpty()) return
-        val names = picked.take(8).joinToString("\n") { "・${it.label}" } +
-            if (picked.size > 8) "\n…ほか ${picked.size - 8}個" else ""
-        AlertDialog.Builder(this)
+
+        val names = TextView(this).apply {
+            text = picked.joinToString("\n") { "・${it.label}（${sizeLabel(it.bytes)}）" }
+            textSize = 15f
+            setTextColor(INK)
+            setLineSpacing(dp(3).toFloat(), 1f)
+            setPadding(dp(12), dp(10), dp(12), dp(10))
+        }
+        // 数が多いときだけスクロールする（高さの上限つき）
+        val scroll = object : ScrollView(this) {
+            override fun onMeasure(widthSpec: Int, heightSpec: Int) {
+                super.onMeasure(widthSpec, MeasureSpec.makeMeasureSpec(dp(240), MeasureSpec.AT_MOST))
+            }
+        }.apply {
+            background = roundRect(0xFFFDECEC.toInt(), dp(10).toFloat())
+            addView(names)
+        }
+        val agree = CheckBox(this).apply {
+            text = "上の ${picked.size}個のアプリと、そのデータが消えることを確認しました"
+            textSize = 15f
+            setTextColor(INK)
+        }
+        val body = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(22), dp(8), dp(22), 0)
+            addView(TextView(context).apply {
+                text = "次のアプリを削除します。これ以外のアプリは残します。"
+                textSize = 14f
+                setTextColor(SUB)
+                setPadding(0, 0, 0, dp(8))
+            })
+            addView(scroll, LinearLayout.LayoutParams(-1, -2))
+            addView(TextView(context).apply {
+                text = "削除すると元に戻せません。アプリの中のデータ（ログイン情報・保存した内容など）も消えます。" +
+                    "このあと Android の確認が 1個ずつ出ます。"
+                textSize = 13f
+                setTextColor(DANGER)
+                setPadding(0, dp(10), 0, dp(4))
+            })
+            addView(agree)
+        }
+        val dialog = AlertDialog.Builder(this)
             .setTitle("${picked.size}個のアプリを削除しますか？")
-            .setMessage(
-                (if (kept == 0) "⚠ 残すアプリが 1個も選ばれていません。削除できるアプリをすべて削除します。\n\n"
-                else "残す ${kept}個以外を、すべて削除します。\n\n") +
-                    "$names\n\nアプリのデータも消えます。Android の確認が 1個ずつ出るので、そのたびに OK を押してください。"
-            )
+            .setView(body)
             .setPositiveButton("削除を始める") { _, _ ->
+                if (!agree.isChecked || current != null) return@setPositiveButton
                 queue.clear()
+                // 確認の画面に出したものだけを消す
                 queue += picked.map { it.pkg }
                 removed = 0
                 skipped = 0
@@ -300,13 +353,22 @@ class MainActivity : ComponentActivity() {
                 next()
             }
             .setNegativeButton("やめる", null)
-            .show()
+            .create()
+        dialog.show()
+        val start = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+        start.isEnabled = false
+        agree.setOnCheckedChangeListener { _, checked -> start.isEnabled = checked }
     }
 
     private fun next() {
         val pkg = queue.removeFirstOrNull()
         if (pkg == null) {
             finishRun()
+            return
+        }
+        // 確認のあとでチェックを戻したもの・すでにないものは消さない
+        if (pkg !in remove || !isInstalled(this, pkg)) {
+            next()
             return
         }
         current = pkg
@@ -341,6 +403,7 @@ class MainActivity : ComponentActivity() {
         } else {
             removed++
             freed += rows.firstOrNull { it.pkg == pkg }?.bytes ?: 0
+            remove -= pkg
         }
         next()
     }
@@ -379,13 +442,14 @@ class MainActivity : ComponentActivity() {
             val view = convertView ?: newRow()
             val h = view.tag as Holder
             val row = items[position]
-            val kept = row.pkg in keep
+            val kept = row.pkg !in remove
             h.icon.setImageDrawable(icons[row.pkg])
             h.name.text = row.label
             h.sub.text = "${usageLabel(row, now, hasUsage)} ・ ${sizeLabel(row.bytes)}"
             h.check.isChecked = kept
             h.mark.text = if (kept) "残す" else "削除"
             h.mark.setTextColor(if (kept) ACCENT else DANGER)
+            view.setBackgroundColor(if (kept) 0 else 0xFFFDE3E3.toInt())
             return view
         }
 

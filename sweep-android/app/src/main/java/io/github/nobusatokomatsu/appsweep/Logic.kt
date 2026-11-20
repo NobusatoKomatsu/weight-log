@@ -24,10 +24,6 @@ fun sortRows(rows: List<AppRow>, sort: Sort): List<AppRow> = when (sort) {
     Sort.NAME -> rows.sortedBy { it.label.lowercase(Locale.ROOT) }
 }
 
-/** この days 日のあいだに使ったアプリ（使用記録がないものは、入れた日で判定） */
-fun recentPkgs(rows: List<AppRow>, days: Int, now: Long): Set<String> =
-    rows.filter { now - it.idleSince() < days * DAY_MS }.map { it.pkg }.toSet()
-
 /** 「3日前」「約2か月前」のような言い方 */
 fun ago(t: Long, now: Long): String {
     val d = ((now - t) / DAY_MS).coerceAtLeast(0)

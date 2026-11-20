@@ -22,12 +22,6 @@ class LogicTest {
     @Test fun sortsByNameIgnoringCase() =
         assertEquals(listOf("apple", "banana", "Mango", "Zebra"), sortRows(all, Sort.NAME).map { it.label })
 
-    @Test fun picksRecentlyUsedOrNewlyInstalled() {
-        assertEquals(setOf("recent", "neverNew"), recentPkgs(all, 30, now))
-        assertEquals(setOf("recent", "neverNew", "old"), recentPkgs(all, 365, now))
-        assertEquals(emptySet<String>(), recentPkgs(all, 2, now))
-    }
-
     @Test fun agoWording() {
         assertEquals("今日", ago(now - 1000, now))
         assertEquals("昨日", ago(daysAgo(1), now))

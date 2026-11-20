@@ -34,14 +34,18 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           VERSION_CODE: ${{ github.run_number }}
         run: |
-          gradle -p sweep-android testReleaseUnitTest assembleRelease --no-daemon
+          gradle -p sweep-android testReleaseUnitTest assembleRelease bundleRelease --no-daemon
           cp sweep-android/app/build/outputs/apk/release/app-release.apk app-sweep.apk
+          # Google Play に提出するのは AAB
+          cp sweep-android/app/build/outputs/bundle/release/app-release.aab app-sweep.aab
 
       # main 以外のブランチでは、試せるように Actions の成果物として残す
       - uses: actions/upload-artifact@v4
         with:
           name: app-sweep-apk
-          path: app-sweep.apk
+          path: |
+            app-sweep.apk
+            app-sweep.aab
 
       - name: Publish to release "sweep"
         if: github.ref == 'refs/heads/main'
@@ -51,5 +55,5 @@ jobs:
           gh release view sweep >/dev/null 2>&1 || gh release create sweep \
             --title "アプリ一掃 Androidアプリ" \
             --notes "app-sweep.apk をダウンロードしてインストールしてください。"
-          gh release upload sweep app-sweep.apk --clobber
-          gh release edit sweep --notes "app-sweep.apk をダウンロードしてインストールしてください。（ビルド ${{ github.run_number }}）"
+          gh release upload sweep app-sweep.apk app-sweep.aab --clobber
+          gh release edit sweep --notes "app-sweep.apk をダウンロードしてインストールしてください。Google Play には app-sweep.aab を提出します。（ビルド ${{ github.run_number }}）"
