@@ -22,10 +22,10 @@ class LogicTest {
     @Test fun sortsByNameIgnoringCase() =
         assertEquals(listOf("apple", "banana", "Mango", "Zebra"), sortRows(all, Sort.NAME).map { it.label })
 
-    @Test fun picksUnusedButNotNewOrKept() {
-        assertEquals(setOf("old", "neverOld"), unusedPkgs(all, 90, now, emptySet()))
-        assertEquals(setOf("neverOld"), unusedPkgs(all, 90, now, setOf("old")))
-        assertEquals(setOf("neverOld"), unusedPkgs(all, 365, now, emptySet()))
+    @Test fun picksRecentlyUsedOrNewlyInstalled() {
+        assertEquals(setOf("recent", "neverNew"), recentPkgs(all, 30, now))
+        assertEquals(setOf("recent", "neverNew", "old"), recentPkgs(all, 365, now))
+        assertEquals(emptySet<String>(), recentPkgs(all, 2, now))
     }
 
     @Test fun agoWording() {

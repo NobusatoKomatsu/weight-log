@@ -24,9 +24,9 @@ fun sortRows(rows: List<AppRow>, sort: Sort): List<AppRow> = when (sort) {
     Sort.NAME -> rows.sortedBy { it.label.lowercase(Locale.ROOT) }
 }
 
-/** days 日以上使っていないアプリ（「残す」に入れたものは除く） */
-fun unusedPkgs(rows: List<AppRow>, days: Int, now: Long, keep: Set<String>): Set<String> =
-    rows.filter { it.pkg !in keep && now - it.idleSince() >= days * DAY_MS }.map { it.pkg }.toSet()
+/** この days 日のあいだに使ったアプリ（使用記録がないものは、入れた日で判定） */
+fun recentPkgs(rows: List<AppRow>, days: Int, now: Long): Set<String> =
+    rows.filter { now - it.idleSince() < days * DAY_MS }.map { it.pkg }.toSet()
 
 /** 「3日前」「約2か月前」のような言い方 */
 fun ago(t: Long, now: Long): String {
