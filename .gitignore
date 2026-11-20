@@ -2,3 +2,6 @@ android/.gradle/
 android/build/
 android/app/build/
 *.p12
+sweep-android/.gradle/
+sweep-android/build/
+sweep-android/app/build/

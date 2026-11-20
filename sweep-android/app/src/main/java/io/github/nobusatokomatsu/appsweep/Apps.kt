@@ -1,0 +1,97 @@
+package io.github.nobusatokomatsu.appsweep
+
+import android.app.AppOpsManager
+import android.app.usage.StorageStatsManager
+import android.app.usage.UsageStatsManager
+import android.content.Context
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
+import android.graphics.drawable.Drawable
+import android.os.Build
+import android.os.Process
+import android.os.storage.StorageManager
+import java.io.File
+
+class Loaded(val rows: List<AppRow>, val icons: Map<String, Drawable>, val hasUsage: Boolean)
+
+/** これより前の時刻は「使用記録なし」として扱う（未使用のアプリは 1970 年付近の値が返る） */
+private const val MIN_VALID_TIME = 1_262_304_000_000L // 2010-01-01
+
+fun hasUsageAccess(c: Context): Boolean {
+    val ops = c.getSystemService(AppOpsManager::class.java)
+    @Suppress("DEPRECATION")
+    val mode = if (Build.VERSION.SDK_INT >= 29) {
+        ops.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), c.packageName)
+    } else {
+        ops.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), c.packageName)
+    }
+    return mode == AppOpsManager.MODE_ALLOWED
+}
+
+fun isInstalled(c: Context, pkg: String): Boolean = try {
+    c.packageManager.getApplicationInfo(pkg, 0)
+    true
+} catch (e: PackageManager.NameNotFoundException) {
+    false
+}
+
+/** 自分で入れたアプリ（システムアプリと、このアプリ自身を除く）を調べる。時間がかかるので画面とは別のスレッドで呼ぶ */
+fun loadApps(c: Context): Loaded {
+    val pm = c.packageManager
+    val now = System.currentTimeMillis()
+    val hasUsage = hasUsageAccess(c)
+
+    val used: Map<String, Long> = if (hasUsage) {
+        try {
+            c.getSystemService(UsageStatsManager::class.java)
+                .queryAndAggregateUsageStats(now - 3 * 365 * DAY_MS, now)
+                .mapValues { it.value.lastTimeUsed }
+        } catch (e: Exception) {
+            emptyMap()
+        }
+    } else emptyMap()
+
+    val storage = c.getSystemService(StorageStatsManager::class.java)
+    val rows = ArrayList<AppRow>()
+    val icons = HashMap<String, Drawable>()
+
+    for (app in pm.getInstalledApplications(0)) {
+        if (app.flags and ApplicationInfo.FLAG_SYSTEM != 0) continue
+        if (app.packageName == c.packageName) continue
+        val pkg = app.packageName
+
+        val installed = try {
+            pm.getPackageInfo(pkg, 0).firstInstallTime
+        } catch (e: Exception) {
+            now
+        }
+        val bytes = (if (hasUsage) storageBytes(storage, pkg) else null) ?: apkBytes(app)
+
+        rows += AppRow(
+            pkg = pkg,
+            label = app.loadLabel(pm).toString(),
+            lastUsed = used[pkg]?.takeIf { it >= MIN_VALID_TIME } ?: 0,
+            installed = installed,
+            bytes = bytes,
+        )
+        try {
+            icons[pkg] = app.loadIcon(pm)
+        } catch (e: Exception) {
+            // アイコンなしで表示する
+        }
+    }
+    return Loaded(rows, icons, hasUsage)
+}
+
+/** アプリ本体＋データ＋キャッシュ。「使用状況へのアクセス」が必要 */
+private fun storageBytes(storage: StorageStatsManager, pkg: String): Long? = try {
+    val s = storage.queryStatsForPackage(StorageManager.UUID_DEFAULT, pkg, Process.myUserHandle())
+    s.appBytes + s.dataBytes + s.cacheBytes
+} catch (e: Exception) {
+    null
+}
+
+/** 許可がないときは、アプリ本体のファイルの大きさだけ */
+private fun apkBytes(app: ApplicationInfo): Long =
+    (listOfNotNull(app.sourceDir) + (app.splitSourceDirs?.toList() ?: emptyList()))
+        .sumOf { runCatching { File(it).length() }.getOrDefault(0L) }
