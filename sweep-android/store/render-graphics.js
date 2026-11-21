@@ -9,10 +9,10 @@ const bg = 'linear-gradient(135deg, #0F766E, #10B981)';
 const icon = `<html><body style="margin:0"><div style="width:512px;height:512px;background:${bg};display:flex;align-items:center;justify-content:center">
   ${bin(512, '21 22 66 66')}</div></body></html>`;
 const feature = `<html><body style="margin:0;font-family:'IPAPGothic','IPAGothic',sans-serif">
-<div style="width:1024px;height:500px;background:${bg};display:flex;align-items:center;gap:24px;padding:0 64px;box-sizing:border-box;color:#fff">
-  <div style="flex:none">${bin(330)}</div>
+<div style="width:1024px;height:500px;background:${bg};display:flex;align-items:center;gap:8px;padding:0 40px;box-sizing:border-box;color:#fff">
+  <div style="flex:none">${bin(280)}</div>
   <div>
-    <div style="font-size:84px;font-weight:bold;letter-spacing:4px;text-shadow:0 2px 8px rgba(0,0,0,.2)">アプリ一掃</div>
+    <div style="font-size:56px;font-weight:bold;letter-spacing:1px;white-space:nowrap;text-shadow:0 2px 8px rgba(0,0,0,.2)">Androidアプリ一掃アプリ</div>
     <div style="font-size:34px;margin-top:20px;line-height:1.5">いらないアプリだけ選んで、<br>まとめて削除</div>
     <div style="font-size:24px;margin-top:22px;opacity:.95">最後に使った日・容量がひと目でわかる</div>
   </div>

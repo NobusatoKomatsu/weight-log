@@ -53,7 +53,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release view sweep >/dev/null 2>&1 || gh release create sweep \
-            --title "アプリ一掃 Androidアプリ" \
+            --title "Androidアプリ一掃アプリ" \
             --notes "app-sweep.apk をダウンロードしてインストールしてください。"
           gh release upload sweep app-sweep.apk app-sweep.aab --clobber
           gh release edit sweep --notes "app-sweep.apk をダウンロードしてインストールしてください。Google Play には app-sweep.aab を提出します。（ビルド ${{ github.run_number }}）"
