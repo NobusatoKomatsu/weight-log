@@ -24,6 +24,29 @@ Play Console に入力する内容と、手順をまとめています。上か�
 
 「Android通知の時限シャットダウン」を公開している**組織用のデベロッパーアカウント**に、新しいアプリとして追加します（新しい登録や登録料は不要）。
 
+## 1.5 公式サイト（Cloudflare）
+
+通知パージ・画面メモと同じく、Cloudflare の Workers で公開します。サイトの中身は `sweep-site/public/`（トップ・プライバシーポリシー・404）、設定は `sweep-site/wrangler.jsonc` です。
+
+**① サイトを公開（Workers）**
+1. Cloudflare の左メニュー「コンピュート」→「Workers & Pages」→「作成」→「Git リポジトリをインポート」→ `NobusatoKomatsu/weight-log`
+2. 設定：
+   - プロジェクト名：`app-sweep`
+   - 本番ブランチ：`main`
+   - **ルートディレクトリ（パス）：`sweep-site`**
+   - ビルドコマンド：空のまま　／　デプロイコマンド：`npx wrangler deploy`
+3. （任意）「設定」→「ビルド」→「ビルドの監視パス」を `sweep-site/*` にすると、アプリだけ変えたときに無駄なデプロイが走りません
+
+**② 独自ドメイン（取得した場合）**
+1. 「ドメイン」→「ドメインを追加」→ 取得したドメイン → プランは Free → 表示されたネームサーバーを、ドメインを取得したサービスで設定
+2. Worker の「設定」→「ドメインとルート」→「追加」→「カスタムドメイン」→ そのドメイン
+3. 「メール」→「Email Routing」で `support@（ドメイン）` を作り、普段読んでいるアドレスへ転送
+
+**③ ドメインが決まったら直す場所**（言ってもらえれば直します）
+- アプリ内のリンク：`MainActivity.kt` の `PRIVACY_URL`（いまは仮に `https://sixpac.jp/sweep/privacy.html`）
+- プライバシーポリシーの問い合わせ用メール：`sweep-site/public/privacy.html`
+- このガイドの URL、仮置きの `sweep/privacy.html` の削除
+
 ## 2. アプリを作成
 
 - アプリ名：`アプリ一掃`
