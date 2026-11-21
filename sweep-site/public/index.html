@@ -26,6 +26,10 @@
   .hero .lead { font-size: clamp(1.05rem, 4vw, 1.25rem); color: var(--muted); margin: 10px 0 0; }
   .hero p { text-wrap: balance; word-break: keep-all; overflow-wrap: anywhere; }
   .badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 20px; }
+  .cta { margin: 22px 0 0; }
+  .cta a { display: inline-block; padding: 12px 28px; border-radius: 999px; background: var(--red); color: #fff; font-weight: 900; text-decoration: none; }
+  .form { background: #fff; border: 2px solid var(--ink); border-radius: 16px; overflow: hidden; }
+  .form iframe { display: block; width: 100%; height: 760px; border: 0; }
   .badge { padding: 4px 14px; border-radius: 999px; background: var(--ink); color: var(--bg); font-size: .9rem; font-weight: 700; }
   main { max-width: 860px; margin: 0 auto; padding: 0 16px 48px; }
   h2 { font-size: 1.4rem; font-weight: 900; text-align: center; margin: 48px 0 16px; }
@@ -60,6 +64,7 @@
   <p class="name">Androidアプリ一掃アプリ</p>
   <p class="lead">残すアプリはそのまま。<wbr>チェックを外したものだけ、<wbr>確認してから削除します。</p>
   <div class="badges"><span class="badge">Android 9 以上</span><span class="badge">無料（広告あり）</span><span class="badge">Google Play で近日公開</span></div>
+  <p class="cta"><a href="#notify">公開のお知らせを受け取る</a></p>
 </section>
 
 <main>
@@ -70,6 +75,13 @@
     <div class="step"><img src="/shot-confirm.png" alt="削除の前に、消すアプリを並べた確認画面" width="540" height="1171" loading="lazy"><h3><span class="num">3</span>確認して削除</h3><p>消すアプリを全部確かめてから、続けて削除します。</p></div>
   </div>
   <p class="caption">画面はサンプルのアプリで表示したものです。</p>
+
+  <h2 id="notify">公開のお知らせを受け取る</h2>
+  <p class="caption" style="margin:0 0 16px">Google Play で公開したら、メールで 1 回だけお知らせします。</p>
+  <div class="form">
+    <iframe src="https://docs.google.com/forms/d/1F6zI7z9dnjEmvQ207XPPzBDLMaQXHiaGKPgwc_77lT8/viewform?embedded=true" title="公開のお知らせの申し込みフォーム" loading="lazy">読み込んでいます…</iframe>
+  </div>
+  <p class="caption">うまく表示されない場合は <a href="https://docs.google.com/forms/d/1F6zI7z9dnjEmvQ207XPPzBDLMaQXHiaGKPgwc_77lT8/viewform">こちらのフォーム</a> を開いてください。</p>
 
   <h2>できること</h2>
   <div class="grid">
