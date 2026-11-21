@@ -9,43 +9,40 @@ Play Console に入力する内容と、手順をまとめています。上か�
 | 提出するアプリ (AAB) | [Releases の sweep](https://github.com/NobusatoKomatsu/weight-log/releases/tag/sweep) の `app-sweep.aab`（`main` に入れるたび自動で作り直されます） |
 | アプリのアイコン 512×512 | `sweep-android/store/icon-512.png` |
 | フィーチャーグラフィック 1024×500 | `sweep-android/store/feature-graphic-1024x500.png` |
-| プライバシーポリシー | https://sixpac.jp/sweep/privacy.html （中身は `sweep/privacy.html`。`main` に入れると公開されます） |
-| 問い合わせ用メール | **未定**。決めたら `sweep/privacy.html` の「お問い合わせ」に入れてください |
+| 公式サイト | https://applications.sucks （中身は `sweep-site/public/`。公開方法は下の「1.5 公式サイトとメール」） |
+| プライバシーポリシー | https://applications.sucks/privacy |
+| 問い合わせ用メール | support@applications.sucks |
 | スクリーンショット 2〜8 枚 | **実機で撮影**（下の「5. スクリーンショット」） |
 
 画像は `node sweep-android/store/render-graphics.js sweep-android/store` で作り直せます（Playwright が必要）。
 
-**申請の前に決めること**
-- 問い合わせ用メールアドレス（プライバシーポリシーとストアに載ります）
-- プライバシーポリシーを専用ドメインに置くか。置く場合は、アプリ内のリンク（`MainActivity.kt` の `PRIVACY_URL`）も合わせて変えます
-- パッケージ名は `io.github.nobusatokomatsu.appsweep` です。**最初にアップロードした後は変更できません。** 変えたい場合はアップロード前に言ってください
+パッケージ名は `io.github.nobusatokomatsu.appsweep` です。**最初にアップロードした後は変更できません。** 変えたい場合はアップロード前に言ってください。
 
 ## 1. デベロッパーアカウント
 
 「Android通知の時限シャットダウン」を公開している**組織用のデベロッパーアカウント**に、新しいアプリとして追加します（新しい登録や登録料は不要）。
 
-## 1.5 公式サイト（Cloudflare）
+## 1.5 公式サイトとメール（applications.sucks）
 
 通知パージ・画面メモと同じく、Cloudflare の Workers で公開します。サイトの中身は `sweep-site/public/`（トップ・プライバシーポリシー・404）、設定は `sweep-site/wrangler.jsonc` です。
 
-**① サイトを公開（Workers）**
-1. Cloudflare の左メニュー「コンピュート」→「Workers & Pages」→「作成」→「Git リポジトリをインポート」→ `NobusatoKomatsu/weight-log`
+**① applications.sucks を Cloudflare に追加**
+1. Cloudflare の左メニュー「ドメイン」→「ドメインを追加」→ `applications.sucks` → プランは Free
+2. 表示された 2 つのネームサーバーを、ゴンベエドメインのドメインマネージャーで設定する（登録時は「無料DNS」にしてあるので書き換える）
+3. 「アクティブ」になるまで待つ（数分〜数時間）
+
+**② サイトを公開（Workers）**
+1. 左メニュー「コンピュート」→「Workers & Pages」→「作成」→「Git リポジトリをインポート」→ `NobusatoKomatsu/weight-log`
 2. 設定：
    - プロジェクト名：`app-sweep`
    - 本番ブランチ：`main`
    - **ルートディレクトリ（パス）：`sweep-site`**
    - ビルドコマンド：空のまま　／　デプロイコマンド：`npx wrangler deploy`
-3. （任意）「設定」→「ビルド」→「ビルドの監視パス」を `sweep-site/*` にすると、アプリだけ変えたときに無駄なデプロイが走りません
+3. デプロイ後、Worker の「設定」→「ドメインとルート」→「追加」→「カスタムドメイン」→ `applications.sucks`
+4. （任意）「設定」→「ビルド」→「ビルドの監視パス」を `sweep-site/*` にすると、アプリだけ変えたときに無駄なデプロイが走りません
 
-**② 独自ドメイン（取得した場合）**
-1. 「ドメイン」→「ドメインを追加」→ 取得したドメイン → プランは Free → 表示されたネームサーバーを、ドメインを取得したサービスで設定
-2. Worker の「設定」→「ドメインとルート」→「追加」→「カスタムドメイン」→ そのドメイン
-3. 「メール」→「Email Routing」で `support@（ドメイン）` を作り、普段読んでいるアドレスへ転送
-
-**③ ドメインが決まったら直す場所**（言ってもらえれば直します）
-- アプリ内のリンク：`MainActivity.kt` の `PRIVACY_URL`（いまは仮に `https://sixpac.jp/sweep/privacy.html`）
-- プライバシーポリシーの問い合わせ用メール：`sweep-site/public/privacy.html`
-- このガイドの URL、仮置きの `sweep/privacy.html` の削除
+**③ メール**
+- `applications.sucks` の「メール」→「Email Routing」で `support@applications.sucks` を作り、普段読んでいるアドレスへ転送
 
 ## 2. アプリを作成
 
@@ -97,13 +94,13 @@ Play Console に入力する内容と、手順をまとめています。上か�
 
 **グラフィック**：アイコン、フィーチャーグラフィック、スクリーンショット（上の表）
 
-**カテゴリ**：ツール　／　**連絡先メールアドレス**：（決めたもの）
+**カテゴリ**：ツール　／　**連絡先メールアドレス**：`support@applications.sucks`　／　**ウェブサイト**：`https://applications.sucks`
 
 ## 4. アプリのコンテンツ（ポリシーの申告）
 
 | 項目 | 回答 |
 |---|---|
-| プライバシーポリシー | `https://sixpac.jp/sweep/privacy.html` |
+| プライバシーポリシー | `https://applications.sucks/privacy` |
 | 広告 | 含まない |
 | アプリのアクセス権 | すべての機能に特別なアクセス権は不要（ログインなし） |
 | コンテンツのレーティング | カテゴリ「その他（ユーティリティ、生産性向上…）」→ すべて「いいえ」 |

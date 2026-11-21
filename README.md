@@ -34,4 +34,4 @@ AiLink などが Health Connect に書き込んだ体重・体脂肪率を、ア
 
 最後に使った日とデータを含めた容量を出すには、「使用状況へのアクセス」の許可が必要です（アプリが案内します）。許可しない場合は、入れた日とアプリ本体の大きさで表示します。
 
-Google Play への申請手順と、入力する文章は [sweep-android/store/README.md](sweep-android/store/README.md) にあります。プライバシーポリシーは `sweep/privacy.html`（公開先 https://sixpac.jp/sweep/privacy.html ）です。
+Google Play への申請手順と、入力する文章は [sweep-android/store/README.md](sweep-android/store/README.md) にあります。公式サイト（https://applications.sucks）の中身は `sweep-site/` にあります（Cloudflare Workers で公開）。

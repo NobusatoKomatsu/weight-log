@@ -25,7 +25,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.WindowCompat
 import java.util.concurrent.Executors
 
-const val PRIVACY_URL = "https://sixpac.jp/sweep/privacy.html"
+const val PRIVACY_URL = "https://applications.sucks/privacy"
 
 class MainActivity : ComponentActivity() {
 
