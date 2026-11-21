@@ -445,8 +445,11 @@ class MainActivity : ComponentActivity() {
             val kept = row.pkg !in remove
             h.icon.setImageDrawable(icons[row.pkg])
             h.name.text = row.label
-            h.sub.text = "${usageLabel(row, now, hasUsage)} ・ ${sizeLabel(row.bytes)}"
+            // 容量は必ず見えるよう先に書く（長いと後ろが省略されるため）
+            h.sub.text = "${sizeLabel(row.bytes)} ・ ${usageLabel(row, now, hasUsage)}"
             h.check.isChecked = kept
+            // 使い回した行で、前のアプリのチェックの動きが残って見えないようにする
+            h.check.jumpDrawablesToCurrentState()
             h.mark.text = if (kept) "残す" else "削除"
             h.mark.setTextColor(if (kept) ACCENT else DANGER)
             view.setBackgroundColor(if (kept) 0 else 0xFFFDE3E3.toInt())
@@ -465,7 +468,7 @@ class MainActivity : ComponentActivity() {
             val sub = TextView(c).apply {
                 textSize = 13f
                 setTextColor(SUB)
-                maxLines = 1
+                maxLines = 2
                 ellipsize = TextUtils.TruncateAt.END
             }
             // 行全体のタップを一覧側で受けるため、チェックボックス自体は押せなくする

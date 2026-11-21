@@ -38,8 +38,8 @@ fun ago(t: Long, now: Long): String {
 
 fun usageLabel(row: AppRow, now: Long, hasUsage: Boolean): String = when {
     row.lastUsed > 0 -> "最後に使用: ${ago(row.lastUsed, now)}"
-    hasUsage -> "使用記録なし ・ 入れた日: ${ago(row.installed, now)}"
-    else -> "入れた日: ${ago(row.installed, now)}"
+    hasUsage -> "使用記録なし ・ 追加: ${ago(row.installed, now)}"
+    else -> "追加: ${ago(row.installed, now)}"
 }
 
 fun sizeLabel(bytes: Long): String = when {

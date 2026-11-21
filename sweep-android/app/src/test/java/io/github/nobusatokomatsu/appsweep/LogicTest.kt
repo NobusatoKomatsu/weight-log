@@ -33,8 +33,8 @@ class LogicTest {
 
     @Test fun usageWording() {
         assertEquals("最後に使用: 2日前", usageLabel(recent, now, true))
-        assertEquals("使用記録なし ・ 入れた日: 3日前", usageLabel(neverNew, now, true))
-        assertEquals("入れた日: 3日前", usageLabel(neverNew, now, false))
+        assertEquals("使用記録なし ・ 追加: 3日前", usageLabel(neverNew, now, true))
+        assertEquals("追加: 3日前", usageLabel(neverNew, now, false))
     }
 
     @Test fun sizeWording() {
