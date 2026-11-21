@@ -204,6 +204,8 @@ class MainActivity : ComponentActivity() {
         val now = System.currentTimeMillis()
         adapter.show(sortRows(rows, sort), now)
         for ((s, chip) in sortChips) chip.setChipOn(s == sort)
+        // 使用状況の許可がないあいだは、最後に使った日が分からないので、入れた日の古い順になる
+        sortChips[Sort.UNUSED]?.text = if (loaded && !hasUsage) "追加が古い順" else "使っていない順"
         banner.visibility = if (loaded && !hasUsage) View.VISIBLE else View.GONE
 
         summary.text = when {
@@ -217,7 +219,9 @@ class MainActivity : ComponentActivity() {
         list.visibility = if (!loaded || nothing) View.GONE else View.VISIBLE
 
         val picked = rows.filter { it.pkg in remove }
-        resetChip.visibility = if (picked.isEmpty()) View.INVISIBLE else View.VISIBLE
+        // 出したり消したりすると一覧が上下に動いて押し間違えるので、常に出しておき、使えないときは薄くする
+        resetChip.isEnabled = picked.isNotEmpty()
+        resetChip.alpha = if (picked.isEmpty()) 0.4f else 1f
         deleteButton.text = when {
             !loaded -> "調べています…"
             picked.isEmpty() -> "いらないアプリのチェックを外してください"
