@@ -10,7 +10,8 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "io.github.nobusatokomatsu.appsweep"
+        // ストアでの ID。公式サイト applications.sucks に合わせている（一度公開すると変えられない）
+        applicationId = "sucks.applications.sweep"
         minSdk = 28
         targetSdk = 36
         versionCode = buildNumber
