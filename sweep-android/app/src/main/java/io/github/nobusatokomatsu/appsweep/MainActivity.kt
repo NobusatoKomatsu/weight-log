@@ -13,6 +13,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.CheckBox
+import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -23,6 +24,10 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.WindowCompat
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.MobileAds
 import java.util.concurrent.Executors
 
 const val PRIVACY_URL = "https://applications.sucks/privacy"
@@ -57,6 +62,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var resetChip: TextView
     private val sortChips = HashMap<Sort, TextView>()
     private val adapter = RowAdapter()
+    private var adView: AdView? = null
 
     private val uninstaller =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { afterUninstall() }
@@ -70,11 +76,18 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        adView?.resume()
         // 削除の確認画面から戻るたびに読み直さない（最後にまとめて読み直す）
         if (current == null) reload()
     }
 
+    override fun onPause() {
+        adView?.pause()
+        super.onPause()
+    }
+
     override fun onDestroy() {
+        adView?.destroy()
         super.onDestroy()
         io.shutdownNow()
     }
@@ -159,7 +172,47 @@ class MainActivity : ComponentActivity() {
             setPadding(dp(16), dp(6), dp(16), dp(10))
             setOnClickListener { openPrivacyPolicy() }
         })
+
+        addAdBanner(root)
         return root
+    }
+
+    /**
+     * 一番下の広告。削除ボタンと押し間違えないよう、線と余白で離す。
+     * 広告が読み込まれたときに一覧やボタンが動かないよう、先に高さを確保しておく
+     */
+    private fun addAdBanner(root: LinearLayout) {
+        try {
+            val widthDp = (resources.displayMetrics.widthPixels / resources.displayMetrics.density).toInt()
+            val size = AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, widthDp)
+            root.addView(View(this).apply { setBackgroundColor(LINE) }, LinearLayout.LayoutParams(-1, dp(1)))
+            val box = FrameLayout(this).apply { minimumHeight = size.getHeightInPixels(context) }
+            root.addView(box, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(8) })
+
+            io.execute {
+                try {
+                    MobileAds.initialize(applicationContext)
+                } catch (e: Throwable) {
+                    return@execute
+                }
+                runOnUiThread {
+                    if (isDestroyed) return@runOnUiThread
+                    try {
+                        val view = AdView(this).apply {
+                            adUnitId = BuildConfig.ADMOB_BANNER_ID
+                            setAdSize(size)
+                        }
+                        box.addView(view, FrameLayout.LayoutParams(-2, -2, Gravity.CENTER_HORIZONTAL))
+                        adView = view
+                        view.loadAd(AdRequest.Builder().build())
+                    } catch (e: Throwable) {
+                        // 広告が出せなくても、アプリはそのまま使える
+                    }
+                }
+            }
+        } catch (e: Throwable) {
+            // 同上
+        }
     }
 
     private fun buildBanner(): View = LinearLayout(this).apply {
@@ -262,7 +315,7 @@ class MainActivity : ComponentActivity() {
                     "・各アプリを最後に使った日時\n" +
                     "・各アプリが使っている容量（本体・データ・キャッシュ）\n\n" +
                     "これらは、どのアプリを使っていないかを一覧に表示するためだけに使います。" +
-                    "端末の外には送信せず、保存もしません（このアプリは通信を行いません）。\n\n" +
+                    "これらの情報は端末の外には送信せず、保存もしません（通信は広告の表示のためだけに行います）。\n\n" +
                     "次の画面で「アプリ一掃」を選び、許可をオンにしてください。許可しなくてもアプリは使えます。"
             )
             .setPositiveButton("設定を開く") { _, _ ->

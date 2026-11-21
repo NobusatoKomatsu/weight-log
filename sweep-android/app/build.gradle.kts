@@ -5,6 +5,11 @@ plugins {
 
 val buildNumber = (System.getenv("VERSION_CODE") ?: "1").toInt()
 
+// AdMob の ID。いまは Google が公開しているテスト用 ID（本物の広告は出ない）。
+// 本番の ID が決まったら、ここを書き換える
+val admobAppId = "ca-app-pub-3940256099942544~3347511713"
+val admobBannerId = "ca-app-pub-3940256099942544/9214589741"
+
 android {
     namespace = "io.github.nobusatokomatsu.appsweep"
     compileSdk = 36
@@ -16,6 +21,8 @@ android {
         targetSdk = 36
         versionCode = buildNumber
         versionName = "1.0.$buildNumber"
+        manifestPlaceholders["admobAppId"] = admobAppId
+        buildConfigField("String", "ADMOB_BANNER_ID", "\"$admobBannerId\"")
     }
 
     signingConfigs {
@@ -39,11 +46,12 @@ android {
         }
     }
 
+    buildFeatures { buildConfig = true }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
 
     testOptions {
         unitTests.all {
@@ -55,8 +63,13 @@ android {
     }
 }
 
+kotlin {
+    compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) }
+}
+
 dependencies {
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.activity:activity-ktx:1.9.3")
+    implementation("com.google.android.gms:play-services-ads:25.5.0")
     testImplementation("junit:junit:4.13.2")
 }
