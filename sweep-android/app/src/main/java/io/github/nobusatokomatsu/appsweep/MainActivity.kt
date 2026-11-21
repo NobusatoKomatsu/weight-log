@@ -164,7 +164,7 @@ class MainActivity : ComponentActivity() {
 
     private fun buildBanner(): View = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        background = roundRect(0xFFFFF7E0.toInt(), dp(14).toFloat(), dp(1), 0xFFE8C766.toInt())
+        background = roundRect(CARD, dp(14).toFloat(), dp(2), INK)
         setPadding(dp(14), dp(12), dp(14), dp(12))
         addView(TextView(context).apply {
             text = "「使用状況へのアクセス」を許可すると、最後に使った日と、データを含めた容量が分かります。" +
@@ -176,7 +176,7 @@ class MainActivity : ComponentActivity() {
             text = "許可する（一覧から「アプリ一掃」を選ぶ）"
             textSize = 15f
             setTypeface(Typeface.DEFAULT, Typeface.BOLD)
-            setTextColor(ACCENT)
+            setTextColor(DANGER)
             setPadding(0, dp(10), 0, dp(2))
             setOnClickListener { openUsageSettings() }
         })

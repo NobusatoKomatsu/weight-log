@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- アプリのタイル 4 つに赤い斜線（通知パージのベル＋斜線と同じ考え方） -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <!-- ごみ箱 -->
-    <path
-        android:pathData="M37,44 H71 M48,44 V38 H60 V44 M41,44 L43.500,73 H64.500 L67,44 M50,52 V65 M58,52 V65"
-        android:strokeColor="#FFFFFF" android:strokeWidth="4.500"
-        android:strokeLineCap="round" android:strokeLineJoin="round" />
+    <path android:fillColor="#0B0B0B"
+        android:pathData="M39,39h8a4,4 0,0 1,4 4v8a4,4 0,0 1,-4 4h-8a4,4 0,0 1,-4 -4v-8a4,4 0,0 1,4 -4z M59,39h8a4,4 0,0 1,4 4v8a4,4 0,0 1,-4 4h-8a4,4 0,0 1,-4 -4v-8a4,4 0,0 1,4 -4z M39,59h8a4,4 0,0 1,4 4v8a4,4 0,0 1,-4 4h-8a4,4 0,0 1,-4 -4v-8a4,4 0,0 1,4 -4z M59,59h8a4,4 0,0 1,4 4v8a4,4 0,0 1,-4 4h-8a4,4 0,0 1,-4 -4v-8a4,4 0,0 1,4 -4z" />
+    <path android:pathData="M31,35 L75,79"
+        android:strokeColor="#FFFFFF" android:strokeWidth="11" android:strokeLineCap="round" />
+    <path android:pathData="M31,35 L75,79"
+        android:strokeColor="#F5190F" android:strokeWidth="6" android:strokeLineCap="round" />
+    <path android:pathData="M71,31 L72.500,26 M76,35 L80.500,31 M78,40.500 L83.500,39.500"
+        android:strokeColor="#F5190F" android:strokeWidth="3.500" android:strokeLineCap="round" />
 </vector>

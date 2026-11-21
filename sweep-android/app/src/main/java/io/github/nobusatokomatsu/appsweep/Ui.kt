@@ -8,13 +8,14 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import kotlin.math.roundToInt
 
-const val INK = 0xFF16201D.toInt()
-const val SUB = 0xFF5F6B67.toInt()
-const val ACCENT = 0xFF0F766E.toInt()
-const val DANGER = 0xFFDC2626.toInt()
+// 通知パージと同じ、白・黒・赤の 3 色
+const val INK = 0xFF0B0B0B.toInt()
+const val SUB = 0xFF5C5C5C.toInt()
+const val ACCENT = 0xFF0B0B0B.toInt()
+const val DANGER = 0xFFF5190F.toInt()
 const val CARD = 0xFFFFFFFF.toInt()
-const val LINE = 0xFFD5DDD9.toInt()
-const val OFF = 0xFFB6BFBB.toInt()
+const val LINE = 0xFFD4D4D4.toInt()
+const val OFF = 0xFFBDBDBD.toInt()
 
 fun Context.dp(v: Number): Int = (v.toFloat() * resources.displayMetrics.density).roundToInt()
 
