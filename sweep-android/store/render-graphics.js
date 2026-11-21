@@ -36,7 +36,7 @@ const icon = `<html><body style="margin:0"><div id="x" style="width:512px;height
   ${mark(512, BLACK, '#fff', '19 21 70 70')}</div></body></html>`;
 const feature = `<html>${fonts}<body><div id="x" style="width:1024px;height:500px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px">
   <div style="display:flex;align-items:center;gap:4px">${mark(220, BLACK, '#fff')}${wordmark(BLACK, 128)}<div style="width:30px"></div></div>
-  <div style="font-size:34px;color:${BLACK};letter-spacing:2px">いらないアプリだけ選んで、<span style="color:${RED}">まとめて削除</span></div>
+  <div style="font-size:44px;color:${BLACK};letter-spacing:3px">要らんアプリ<span style="color:${RED}">まとめて一掃</span></div>
 </div></body></html>`;
 
 (async () => {
