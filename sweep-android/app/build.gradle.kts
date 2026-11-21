@@ -77,5 +77,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.activity:activity-ktx:1.9.3")
     implementation("com.google.android.gms:play-services-ads:25.5.0")
+    // 広告の部品が古い fragment を連れてくるので、新しいものを指定する（削除確認の結果を受け取る仕組みに必要）
+    implementation("androidx.fragment:fragment:1.8.5")
     testImplementation("junit:junit:4.13.2")
 }
