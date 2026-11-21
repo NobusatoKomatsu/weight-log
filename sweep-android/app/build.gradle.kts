@@ -5,10 +5,12 @@ plugins {
 
 val buildNumber = (System.getenv("VERSION_CODE") ?: "1").toInt()
 
-// AdMob の ID。いまは Google が公開しているテスト用 ID（本物の広告は出ない）。
-// 本番の ID が決まったら、ここを書き換える
-val admobAppId = "ca-app-pub-3940256099942544~3347511713"
-val admobBannerId = "ca-app-pub-3940256099942544/9214589741"
+// AdMob の ID。配布するビルド（release）は本番、手元で試すビルド（debug）は
+// Google が公開しているテスト用 ID（自分の広告を誤ってタップしても規約違反にならない）
+val admobAppId = "ca-app-pub-3726905377775362~6932691428"
+val admobBannerId = "ca-app-pub-3726905377775362/2191500639"
+val admobTestAppId = "ca-app-pub-3940256099942544~3347511713"
+val admobTestBannerId = "ca-app-pub-3940256099942544/9214589741"
 
 android {
     namespace = "io.github.nobusatokomatsu.appsweep"
@@ -21,8 +23,6 @@ android {
         targetSdk = 36
         versionCode = buildNumber
         versionName = "1.0.$buildNumber"
-        manifestPlaceholders["admobAppId"] = admobAppId
-        buildConfigField("String", "ADMOB_BANNER_ID", "\"$admobBannerId\"")
     }
 
     signingConfigs {
@@ -38,7 +38,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            manifestPlaceholders["admobAppId"] = admobTestAppId
+            buildConfigField("String", "ADMOB_BANNER_ID", "\"$admobTestBannerId\"")
+        }
         release {
+            manifestPlaceholders["admobAppId"] = admobAppId
+            buildConfigField("String", "ADMOB_BANNER_ID", "\"$admobBannerId\"")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
