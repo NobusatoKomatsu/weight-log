@@ -11,22 +11,21 @@ const face = (file) => fontDir && fs.existsSync(`${fontDir}/${file}`)
 const fonts = `<style>${face('noto-sans-jp-japanese-900-normal.woff2')}${face('noto-sans-jp-latin-900-normal.woff2')}
   body{margin:0;font-family:Logo,'Noto Sans JP','IPAPGothic',sans-serif;font-weight:900}</style>`;
 
-// アプリのアイコン 4 つ（カメラ・音楽・チャット・メール）をひし形に並べ、あいだを赤い斜線が通る。
-// 通知パージのベル＋斜線と同じ考え方。ink はタイルの色、gap は絵柄と斜線のふちの色（白地なら白）
+// アプリのアイコン 4 つ（動画・ゲーム・チャット・買い物）をひし形に並べ、あいだを赤い ✖ が通る。
+// ink はタイルの色、gap は絵柄と ✖ のふちの色（白地なら白）
 const TILE = 'M5,0h10a5,5 0 0 1 5,5v10a5,5 0 0 1 -5,5h-10a5,5 0 0 1 -5,-5v-10a5,5 0 0 1 5,-5z';
 const GLYPHS = {
-  camera: 'M4.500,7h2.300l1.200,-1.800h4l1.200,1.800h2.300a1,1 0 0 1 1,1v6a1,1 0 0 1 -1,1h-11a1,1 0 0 1 -1,-1v-6a1,1 0 0 1 1,-1z M10,8.300a2.700,2.700 0 1 0 0.001,0z',
-  music: 'M8,5.300l7,-1.600v9.300a2.100,2.100 0 1 1 -1.500,-2v-4.400l-4,0.900v6.500a2.100,2.100 0 1 1 -1.500,-2z',
+  video: 'M3.500,5.500h13v9h-13z M8.300,7.500v5l4.500,-2.500z',
+  game: 'M5.500,6.500h9a3.500,3.500 0 0 1 0,7h-9a3.500,3.500 0 0 1 0,-7z M6,9.300v1.400h1.300v1.300h1.400v-1.300h1.300v-1.400h-1.300v-1.300h-1.400v1.300z M13.500,9a1,1 0 1 0 0.001,0z',
   chat: 'M5.500,5h9a1.500,1.500 0 0 1 1.500,1.500v5a1.500,1.500 0 0 1 -1.500,1.500h-4.500l-3,2.700v-2.700h-1.500a1.500,1.500 0 0 1 -1.500,-1.500v-5a1.500,1.500 0 0 1 1.500,-1.500z',
-  mail: 'M4,5.500h12v9h-12z M5.300,6.800v6.400h9.400v-6.400l-4.700,3.900z',
+  cart: 'M3.500,5h2.200l0.600,2h10.200l-1.700,5.500h-7.300l-1.900,-6.300h-2.100z M8.300,14a1.300,1.300 0 1 0 0.001,0z M13.700,14a1.300,1.300 0 1 0 0.001,0z',
 };
 const tile = (x, y, glyph, ink, gap) => `<g transform="translate(${x} ${y}) scale(0.8)"><path d="${TILE}" fill="${ink}"/><path d="${GLYPHS[glyph]}" fill="${gap}" fill-rule="evenodd"/></g>`;
 const mark = (size, ink, gap, vb = '21 25 66 66') => `
 <svg width="${size}" height="${size}" viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">
-  ${tile(46, 34, 'camera', ink, gap)}${tile(30, 50, 'music', ink, gap)}${tile(62, 50, 'chat', ink, gap)}${tile(46, 66, 'mail', ink, gap)}
-  <path d="M31,35 L77,81" stroke="${gap}" stroke-width="9" stroke-linecap="round"/>
-  <path d="M31,35 L77,81" stroke="${RED}" stroke-width="5" stroke-linecap="round"/>
-  <path d="M73,31 L74.500,26 M78,35 L82.500,31 M80,40.500 L85.500,39.500" stroke="${RED}" stroke-width="3.500" stroke-linecap="round" fill="none"/>
+  ${tile(46, 34, 'video', ink, gap)}${tile(30, 50, 'game', ink, gap)}${tile(62, 50, 'chat', ink, gap)}${tile(46, 66, 'cart', ink, gap)}
+  <path d="M33,37 L75,79 M75,37 L33,79" stroke="${gap}" stroke-width="9" stroke-linecap="round" fill="none"/>
+  <path d="M33,37 L75,79 M75,37 L33,79" stroke="${RED}" stroke-width="5" stroke-linecap="round" fill="none"/>
 </svg>`;
 
 const wordmark = (ink, px) => `
