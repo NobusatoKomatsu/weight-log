@@ -1,14 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- アプリのタイル 4 つに赤い斜線（通知パージのベル＋斜線と同じ考え方） -->
+<!-- アプリのアイコン 4 つ（カメラ・音楽・チャット・メール）のあいだを赤い斜線が通る。通知パージのベル＋斜線と同じ考え方 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#0B0B0B"
-        android:pathData="M39,39h8a4,4 0,0 1,4 4v8a4,4 0,0 1,-4 4h-8a4,4 0,0 1,-4 -4v-8a4,4 0,0 1,4 -4z M59,39h8a4,4 0,0 1,4 4v8a4,4 0,0 1,-4 4h-8a4,4 0,0 1,-4 -4v-8a4,4 0,0 1,4 -4z M39,59h8a4,4 0,0 1,4 4v8a4,4 0,0 1,-4 4h-8a4,4 0,0 1,-4 -4v-8a4,4 0,0 1,4 -4z M59,59h8a4,4 0,0 1,4 4v8a4,4 0,0 1,-4 4h-8a4,4 0,0 1,-4 -4v-8a4,4 0,0 1,4 -4z" />
-    <path android:pathData="M31,35 L75,79"
-        android:strokeColor="#FFFFFF" android:strokeWidth="11" android:strokeLineCap="round" />
-    <path android:pathData="M31,35 L75,79"
-        android:strokeColor="#F5190F" android:strokeWidth="6" android:strokeLineCap="round" />
-    <path android:pathData="M71,31 L72.500,26 M76,35 L80.500,31 M78,40.500 L83.500,39.500"
+    <!-- 108 の枠の中央に寄せる（絵は 30〜86 × 26〜82 の範囲） -->
+    <group android:translateX="-4" android:translateY="-4">
+    <group android:translateX="46" android:translateY="34" android:scaleX="0.8" android:scaleY="0.8">
+        <path android:fillColor="#0B0B0B" android:pathData="M5,0h10a5,5 0 0 1 5,5v10a5,5 0 0 1 -5,5h-10a5,5 0 0 1 -5,-5v-10a5,5 0 0 1 5,-5z" />
+        <path android:fillColor="#FFFFFF" android:fillType="evenOdd" android:pathData="M4.500,7h2.300l1.200,-1.800h4l1.200,1.800h2.300a1,1 0 0 1 1,1v6a1,1 0 0 1 -1,1h-11a1,1 0 0 1 -1,-1v-6a1,1 0 0 1 1,-1z M10,8.300a2.700,2.700 0 1 0 0.001,0z" />
+    </group>
+    <group android:translateX="30" android:translateY="50" android:scaleX="0.8" android:scaleY="0.8">
+        <path android:fillColor="#0B0B0B" android:pathData="M5,0h10a5,5 0 0 1 5,5v10a5,5 0 0 1 -5,5h-10a5,5 0 0 1 -5,-5v-10a5,5 0 0 1 5,-5z" />
+        <path android:fillColor="#FFFFFF" android:fillType="evenOdd" android:pathData="M8,5.300l7,-1.600v9.300a2.100,2.100 0 1 1 -1.500,-2v-4.400l-4,0.900v6.500a2.100,2.100 0 1 1 -1.500,-2z" />
+    </group>
+    <group android:translateX="62" android:translateY="50" android:scaleX="0.8" android:scaleY="0.8">
+        <path android:fillColor="#0B0B0B" android:pathData="M5,0h10a5,5 0 0 1 5,5v10a5,5 0 0 1 -5,5h-10a5,5 0 0 1 -5,-5v-10a5,5 0 0 1 5,-5z" />
+        <path android:fillColor="#FFFFFF" android:fillType="evenOdd" android:pathData="M5.500,5h9a1.500,1.500 0 0 1 1.500,1.500v5a1.500,1.500 0 0 1 -1.500,1.500h-4.500l-3,2.700v-2.700h-1.500a1.500,1.500 0 0 1 -1.500,-1.500v-5a1.500,1.500 0 0 1 1.500,-1.500z" />
+    </group>
+    <group android:translateX="46" android:translateY="66" android:scaleX="0.8" android:scaleY="0.8">
+        <path android:fillColor="#0B0B0B" android:pathData="M5,0h10a5,5 0 0 1 5,5v10a5,5 0 0 1 -5,5h-10a5,5 0 0 1 -5,-5v-10a5,5 0 0 1 5,-5z" />
+        <path android:fillColor="#FFFFFF" android:fillType="evenOdd" android:pathData="M4,5.500h12v9h-12z M5.300,6.800v6.400h9.400v-6.400l-4.700,3.900z" />
+    </group>
+    <path android:pathData="M31,35 L77,81"
+        android:strokeColor="#FFFFFF" android:strokeWidth="9" android:strokeLineCap="round" />
+    <path android:pathData="M31,35 L77,81"
+        android:strokeColor="#F5190F" android:strokeWidth="5" android:strokeLineCap="round" />
+    <path android:pathData="M73,31 L74.500,26 M78,35 L82.500,31 M80,40.500 L85.500,39.500"
         android:strokeColor="#F5190F" android:strokeWidth="3.500" android:strokeLineCap="round" />
+    </group>
 </vector>

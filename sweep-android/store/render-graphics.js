@@ -11,16 +11,22 @@ const face = (file) => fontDir && fs.existsSync(`${fontDir}/${file}`)
 const fonts = `<style>${face('noto-sans-jp-japanese-900-normal.woff2')}${face('noto-sans-jp-latin-900-normal.woff2')}
   body{margin:0;font-family:Logo,'Noto Sans JP','IPAPGothic',sans-serif;font-weight:900}</style>`;
 
-// アプリのタイル 4 つに赤い斜線（通知パージのベル＋斜線と同じ考え方）。ink はタイルの色、gap は斜線のふちの色
-const mark = (size, ink, gap, vb = '21 21 66 66') => `
+// アプリのアイコン 4 つ（カメラ・音楽・チャット・メール）をひし形に並べ、あいだを赤い斜線が通る。
+// 通知パージのベル＋斜線と同じ考え方。ink はタイルの色、gap は絵柄と斜線のふちの色（白地なら白）
+const TILE = 'M5,0h10a5,5 0 0 1 5,5v10a5,5 0 0 1 -5,5h-10a5,5 0 0 1 -5,-5v-10a5,5 0 0 1 5,-5z';
+const GLYPHS = {
+  camera: 'M4.500,7h2.300l1.200,-1.800h4l1.200,1.800h2.300a1,1 0 0 1 1,1v6a1,1 0 0 1 -1,1h-11a1,1 0 0 1 -1,-1v-6a1,1 0 0 1 1,-1z M10,8.300a2.700,2.700 0 1 0 0.001,0z',
+  music: 'M8,5.300l7,-1.600v9.300a2.100,2.100 0 1 1 -1.500,-2v-4.400l-4,0.900v6.500a2.100,2.100 0 1 1 -1.500,-2z',
+  chat: 'M5.500,5h9a1.500,1.500 0 0 1 1.500,1.500v5a1.500,1.500 0 0 1 -1.500,1.500h-4.500l-3,2.700v-2.700h-1.500a1.500,1.500 0 0 1 -1.500,-1.500v-5a1.500,1.500 0 0 1 1.500,-1.500z',
+  mail: 'M4,5.500h12v9h-12z M5.300,6.800v6.400h9.400v-6.400l-4.700,3.900z',
+};
+const tile = (x, y, glyph, ink, gap) => `<g transform="translate(${x} ${y}) scale(0.8)"><path d="${TILE}" fill="${ink}"/><path d="${GLYPHS[glyph]}" fill="${gap}" fill-rule="evenodd"/></g>`;
+const mark = (size, ink, gap, vb = '21 25 66 66') => `
 <svg width="${size}" height="${size}" viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">
-  <g fill="${ink}">
-    <rect x="35" y="39" width="16" height="16" rx="4"/><rect x="55" y="39" width="16" height="16" rx="4"/>
-    <rect x="35" y="59" width="16" height="16" rx="4"/><rect x="55" y="59" width="16" height="16" rx="4"/>
-  </g>
-  <path d="M31,35 L75,79" stroke="${gap}" stroke-width="11" stroke-linecap="round"/>
-  <path d="M31,35 L75,79" stroke="${RED}" stroke-width="6" stroke-linecap="round"/>
-  <path d="M71,31 L72.500,26 M76,35 L80.500,31 M78,40.500 L83.500,39.500" stroke="${RED}" stroke-width="3.500" stroke-linecap="round" fill="none"/>
+  ${tile(46, 34, 'camera', ink, gap)}${tile(30, 50, 'music', ink, gap)}${tile(62, 50, 'chat', ink, gap)}${tile(46, 66, 'mail', ink, gap)}
+  <path d="M31,35 L77,81" stroke="${gap}" stroke-width="9" stroke-linecap="round"/>
+  <path d="M31,35 L77,81" stroke="${RED}" stroke-width="5" stroke-linecap="round"/>
+  <path d="M73,31 L74.500,26 M78,35 L82.500,31 M80,40.500 L85.500,39.500" stroke="${RED}" stroke-width="3.500" stroke-linecap="round" fill="none"/>
 </svg>`;
 
 const wordmark = (ink, px) => `
@@ -33,7 +39,7 @@ const wordmark = (ink, px) => `
 const logo = (ink, gap) => `<html>${fonts}<body style="background:transparent">
   <div id="x" style="display:inline-flex;align-items:center;gap:6px;padding:8px 20px 8px 4px">${mark(300, ink, gap)}${wordmark(ink, 190)}</div></body></html>`;
 const icon = `<html><body style="margin:0"><div id="x" style="width:512px;height:512px;background:#fff;display:flex;align-items:center;justify-content:center">
-  ${mark(512, BLACK, '#fff', '19 21 70 70')}</div></body></html>`;
+  ${mark(512, BLACK, '#fff', '18 22 72 72')}</div></body></html>`;
 const feature = `<html>${fonts}<body><div id="x" style="width:1024px;height:500px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px">
   <div style="display:flex;align-items:center;gap:4px">${mark(220, BLACK, '#fff')}${wordmark(BLACK, 128)}<div style="width:30px"></div></div>
   <div style="font-size:44px;color:${BLACK};letter-spacing:3px">要らんアプリ<span style="color:${RED}">まとめて一掃</span></div>
