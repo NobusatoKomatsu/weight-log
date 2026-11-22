@@ -51,7 +51,8 @@
   .card { background: var(--card); border-radius: 16px; padding: 20px; }
   .card h3 { margin: 0 0 4px; font-size: 1.05rem; }
   .card p { margin: 0; color: var(--muted); font-size: .95rem; }
-  .icon { font-size: 1.8rem; }
+  .icon { line-height: 0; margin-bottom: 10px; color: var(--ink); }
+  .icon svg { width: 72px; height: 72px; }
   .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
   .step { text-align: center; }
   .step img { width: 100%; max-width: 260px; height: auto; border-radius: 20px; border: 2px solid var(--ink); }
@@ -128,17 +129,17 @@
 
   <h2>What it does</h2>
   <div class="grid">
-    <div class="card"><div class="icon">🕒</div><h3>Find unused apps</h3><p>Sort by “least recently used” to bring long-forgotten apps to the top.</p></div>
-    <div class="card"><div class="icon">📦</div><h3>Find the biggest apps</h3><p>Sort by size, including each app's data and cache.</p></div>
-    <div class="card"><div class="icon">🧹</div><h3>Remove in one go</h3><p>Selected apps are uninstalled in sequence, and you see the space freed at the end.</p></div>
+    <div class="card"><div class="icon"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M24,13 V24 L32,29" stroke="var(--red)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><h3>Find unused apps</h3><p>Sort by “least recently used” to bring long-forgotten apps to the top.</p></div>
+    <div class="card"><div class="icon"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24,6 L40,14 V34 L24,42 L8,34 V14 Z M8,14 L24,22 L40,14 M24,22 V42" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M16,10 L32,18 V25" stroke="var(--red)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><h3>Find the biggest apps</h3><p>Sort by size, including each app's data and cache.</p></div>
+    <div class="card"><div class="icon"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M41,4 L24,21" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M18,17 L28,27 L21,41 L4,26 Z" fill="currentColor" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M12,25 L19,32 M17,21 L24,28" stroke="var(--card)" stroke-width="1.6" stroke-linecap="round"/><rect x="29" y="32" width="7" height="7" rx="2" fill="var(--red)" transform="rotate(12 32.5 35.5)"/><rect x="38" y="25" width="6" height="6" rx="1.8" fill="var(--red)" transform="rotate(-14 41 28)"/><rect x="39" y="38" width="5" height="5" rx="1.5" fill="var(--red)" transform="rotate(25 41.5 40.5)"/><path d="M26,44 H34 M31,28 L35,25" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><h3>Remove in one go</h3><p>Selected apps are uninstalled in sequence, and you see the space freed at the end.</p></div>
   </div>
 
   <h2>Built to prevent mistakes</h2>
   <div class="grid">
-    <div class="card"><div class="icon">✅</div><h3>Everything is kept by default</h3><p>Only the apps you untick yourself are ever removed.</p></div>
-    <div class="card"><div class="icon">📋</div><h3>See it all before it happens</h3><p>Every app to be removed is listed, and nothing starts until you tick “I have checked”.</p></div>
-    <div class="card"><div class="icon">☝️</div><h3>One confirmation per app</h3><p>Android asks you to confirm each uninstall. You can stop at any time.</p></div>
-    <div class="card"><div class="icon">🛡️</div><h3>System apps are excluded</h3><p>Preinstalled apps never appear in the list, and your unticked choices are not saved.</p></div>
+    <div class="card"><div class="icon"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="7" width="34" height="34" rx="8" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M15,24 L22,31 L34,16" stroke="var(--red)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><h3>Everything is kept by default</h3><p>Only the apps you untick yourself are ever removed.</p></div>
+    <div class="card"><div class="icon"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="9" y="8" width="30" height="35" rx="5" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/><rect x="17" y="3" width="14" height="9" rx="3" fill="currentColor"/><path d="M16,21 H18 M16,28 H18 M16,35 H18" stroke="var(--red)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M24,21 H33 M24,28 H33 M24,35 H30" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><h3>See it all before it happens</h3><p>Every app to be removed is listed, and nothing starts until you tick “I have checked”.</p></div>
+    <div class="card"><div class="icon"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="8" width="40" height="32" rx="6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/><rect x="10" y="14" width="10" height="10" rx="3" fill="currentColor"/><path d="M25,16 H38 M25,22 H33" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/><rect x="10" y="29" width="12" height="6" rx="3" stroke="currentColor" stroke-width="2.4" fill="none"/><rect x="26" y="29" width="12" height="6" rx="3" fill="var(--red)" stroke="var(--red)" stroke-width="2.4"/></svg></div><h3>One confirmation per app</h3><p>Android asks you to confirm each uninstall. You can stop at any time.</p></div>
+    <div class="card"><div class="icon"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24,5 L39,11 V23 C39,33 32,40 24,43 C16,40 9,33 9,23 V11 Z" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/><rect x="17.500" y="22" width="13" height="10" rx="2.500" fill="var(--red)"/><path d="M20,22 V19 a4,4 0 0 1 8,0 V22" stroke="var(--red)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><h3>System apps are excluded</h3><p>Preinstalled apps never appear in the list, and your unticked choices are not saved.</p></div>
   </div>
 
   <h2>Privacy</h2>
