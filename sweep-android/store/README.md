@@ -153,7 +153,7 @@ Androidアプリ一掃アプリ
 
 ## 5. スクリーンショット
 
-`sweep-android/store/screenshots/` の 5 枚を、番号の順にアップロードします（1078×2152。Google Play の「長い辺は短い辺の 2 倍まで」に収まる大きさ）。
+`sweep-android/store/screenshots/` の 5 枚を、番号の順にアップロードします（1080×2156。Google Play の「長い辺は短い辺の 2 倍まで」に収まる大きさ）。
 
 | ファイル | 画面 |
 |---|---|
