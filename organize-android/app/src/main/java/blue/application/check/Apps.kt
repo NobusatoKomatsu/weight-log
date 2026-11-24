@@ -80,6 +80,7 @@ fun loadApps(c: Context): Loaded {
             dataBytes = sizes[1],
             cacheBytes = sizes[2],
             installer = installerOf(pm, pkg),
+            category = app.category,
         )
         try {
             icons[pkg] = app.loadIcon(pm)

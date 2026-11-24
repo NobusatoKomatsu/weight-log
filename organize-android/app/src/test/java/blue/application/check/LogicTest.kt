@@ -76,3 +76,50 @@ class LogicTest {
         assertEquals(6_000_000L, AppRow("p", "l", 0, 0, 1_000_000, 2_000_000, 3_000_000).bytes)
     }
 }
+
+class GroupTest {
+    private val now = 1_800_000_000_000L
+    private fun daysAgo(d: Int) = now - d * DAY_MS
+    private fun app(pkg: String, label: String, used: Int? = 1, category: Int = -1) =
+        AppRow(pkg, label, used?.let { daysAgo(it) } ?: 0, daysAgo(400), 1_000_000, category = category)
+    private fun judged(r: AppRow) = Judged(r, judge(r, now, true, false, false), false)
+
+    @Test fun groupsByAndroidCategoryFirst() {
+        assertEquals(Group.GAME, groupOf(app("com.x.mailquest", "Mail Quest", category = 0)))
+        assertEquals(Group.MAP, groupOf(app("com.x.y", "Y", category = 6)))
+        assertEquals(Group.WORK, groupOf(app("com.x.y", "Y", category = 7)))
+    }
+
+    @Test fun guessesFromNames() {
+        assertEquals(Group.BROWSER, groupOf(app("org.example.browser", "Surf")))
+        assertEquals(Group.MONEY, groupOf(app("jp.example.app", "みらい銀行")))
+        assertEquals(Group.MAP, groupOf(app("jp.example.app", "のりかえ地図")))
+        assertEquals(Group.VIDEO, groupOf(app("jp.example.tv", "みるみる")))
+        // 短い英語は、ほかの単語の一部には当てない（"paper" の "pay" ではない）
+        assertEquals(Group.OTHER, groupOf(app("jp.example.paper", "おりがみ")))
+        assertEquals(Group.OTHER, groupOf(app("jp.example.app", "ふしぎ")))
+    }
+
+    @Test fun sectionsPutBiggestGroupsFirstAndIdleAppsFirst() {
+        val items = listOf(
+            app("a.map1", "地図A", used = 1), app("a.map2", "地図B", used = 90), app("a.map3", "地図C", used = null),
+            app("a.game", "ゲームX"), app("a.q1", "ふしぎ"), app("a.q2", "なぞ"), app("a.q3", "はてな"), app("a.q4", "ほか"),
+        ).map(::judged)
+        val s = sections(items, ::groupOf)
+        assertEquals(listOf(Group.MAP, Group.GAME, Group.OTHER), s.map { it.group })
+        assertEquals(listOf("a.map3", "a.map2", "a.map1"), s[0].items.map { it.row.pkg })
+        assertEquals(3_000_000L, s[0].bytes)
+    }
+
+    @Test fun homePlanSplitsFrontFoldersAndReview() {
+        val items = listOf(
+            app("a.talk", "トークA", used = 0), app("a.map", "地図A", used = 3),
+            app("a.game1", "ゲームB", used = 20), app("a.game2", "ゲームA", used = 10),
+            app("a.old", "ふるい", used = 100), app("a.never", "しらない", used = null),
+        ).map(::judged)
+        val plan = homePlan(items, now, ::groupOf)
+        assertEquals(listOf("a.talk", "a.map"), plan.front.map { it.pkg })
+        assertEquals(listOf(Group.GAME to listOf("a.game2", "a.game1")), plan.folders.map { it.first to it.second.map { r -> r.pkg } })
+        assertEquals(setOf("a.old", "a.never"), plan.review.map { it.pkg }.toSet())
+    }
+}

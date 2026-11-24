@@ -12,6 +12,8 @@ data class AppRow(
     val dataBytes: Long = 0,
     val cacheBytes: Long = 0,
     val installer: String? = PLAY_STORE,
+    /** Android がアプリに付けている種類（ApplicationInfo.category）。付いていなければ -1 */
+    val category: Int = -1,
 ) {
     val bytes: Long get() = appBytes + dataBytes + cacheBytes
     val fromPlay: Boolean get() = installer == PLAY_STORE
@@ -109,4 +111,87 @@ fun sizeLabel(bytes: Long): String = when {
     bytes >= 1_000_000_000 -> String.format(Locale.ROOT, "%.1f GB", bytes / 1e9)
     bytes >= 1_000_000 -> "${bytes / 1_000_000} MB"
     else -> "${(bytes / 1000).coerceAtLeast(1)} KB"
+}
+
+// ---------- 種類ごとの整理 ----------
+
+/** 同じような働きのアプリをまとめる種類。ホーム画面のフォルダ名にもそのまま使える名前にしている */
+enum class Group(val title: String) {
+    GAME("ゲーム"), SOCIAL("連絡・SNS"), VIDEO("動画"), MUSIC("音楽"), PHOTO("写真・カメラ"),
+    NEWS("ニュース・本"), MAP("地図・乗り物"), SHOPPING("買い物"), MONEY("お金"),
+    BROWSER("ブラウザ"), MAIL("メール"), WORK("仕事・道具"), OTHER("そのほか")
+}
+
+/** 名前に含まれていたら、その種類とみなす言葉（パッケージ名とアプリ名を小文字にして調べる） */
+private val KEYWORDS: List<Pair<Group, List<String>>> = listOf(
+    Group.BROWSER to listOf("browser", "chrome", "firefox", "ブラウザ"),
+    Group.MAIL to listOf("mail", "メール"),
+    Group.MONEY to listOf("bank", "pay", "wallet", "銀行", "家計", "証券", "ペイ", "さいふ", "財布"),
+    Group.SHOPPING to listOf("shop", "store", "market", "coupon", "ショッピング", "クーポン", "通販", "フリマ"),
+    Group.MAP to listOf("map", "navi", "transit", "taxi", "地図", "マップ", "乗換", "のりかえ", "ナビ"),
+    Group.PHOTO to listOf("camera", "photo", "gallery", "カメラ", "写真", "フォト"),
+    Group.MUSIC to listOf("music", "radio", "podcast", "音楽", "ミュージック", "ラジオ"),
+    Group.VIDEO to listOf("video", "movie", "tv", "動画", "ビデオ", "テレビ"),
+    Group.NEWS to listOf("news", "book", "comic", "manga", "ニュース", "新聞", "マンガ", "漫画", "読書"),
+    Group.SOCIAL to listOf("chat", "talk", "messenger", "sns", "トーク", "チャット"),
+    Group.GAME to listOf("game", "puzzle", "rpg", "ゲーム", "パズル"),
+    Group.WORK to listOf("office", "docs", "note", "calendar", "scanner", "メモ", "カレンダー", "ツール"),
+)
+
+/**
+ * アプリの種類を決める。Android が付けた種類があればそれを使い、なければ名前の言葉から推測する。
+ * 推測なので外れることがある（本人があとから変えられる）
+ */
+fun groupOf(row: AppRow): Group {
+    when (row.category) {
+        0 -> return Group.GAME
+        1 -> return Group.MUSIC
+        2 -> return Group.VIDEO
+        3 -> return Group.PHOTO
+        4 -> return Group.SOCIAL
+        5 -> return Group.NEWS
+        6 -> return Group.MAP
+    }
+    val text = (row.pkg + " " + row.label).lowercase(Locale.ROOT)
+    for ((group, words) in KEYWORDS) {
+        // 英字の短い言葉（tv, pay など）は、ほかの単語の一部に当たらないよう、区切りで分けて調べる
+        val tokens = text.split(Regex("[^a-z0-9]+"))
+        if (words.any { w -> if (w.all { it in 'a'..'z' } && w.length <= 3) w in tokens else w in text }) return group
+    }
+    return if (row.category == 7) Group.WORK else Group.OTHER
+}
+
+/** いつから使っていないか。使用記録がないアプリは、入った日から数える */
+fun AppRow.idleSince(): Long = if (lastUsed > 0) lastUsed else installed
+
+class Section(val group: Group, val items: List<Judged>) {
+    val bytes: Long get() = items.sumOf { it.row.bytes }
+}
+
+/**
+ * 種類ごとにまとめる。同じ種類がたくさんあるものを上に（重なりを見つけやすくするため）、
+ * 種類の中では使っていないものを上に並べる。「そのほか」は最後
+ */
+fun sections(items: List<Judged>, groupFor: (AppRow) -> Group): List<Section> =
+    items.groupBy { groupFor(it.row) }
+        .map { (g, list) -> Section(g, list.sortedBy { it.row.idleSince() }) }
+        .sortedWith(compareBy<Section> { it.group == Group.OTHER }.thenByDescending { it.items.size }.thenBy { it.group.ordinal })
+
+/** 1 枚目に置く候補にするのは、この日数のうちに使ったアプリ */
+const val HOME_DAYS = 7
+const val HOME_MAX = 12
+
+/** ホーム画面の並べ方の案。front＝1 枚目に置く、folders＝種類ごとのフォルダ、review＝先に確かめる（削除を考える） */
+class HomePlan(val front: List<AppRow>, val folders: List<Pair<Group, List<AppRow>>>, val review: List<AppRow>)
+
+fun homePlan(items: List<Judged>, now: Long, groupFor: (AppRow) -> Group): HomePlan {
+    val review = items.filter { it.verdict.level != Level.OK }
+    val keep = items.filter { it.verdict.level == Level.OK }.map { it.row }
+    val front = keep.filter { it.lastUsed > 0 && now - it.lastUsed < HOME_DAYS * DAY_MS }
+        .sortedByDescending { it.lastUsed }.take(HOME_MAX)
+    val rest = keep - front.toSet()
+    val folders = rest.groupBy(groupFor).toList()
+        .sortedWith(compareBy<Pair<Group, List<AppRow>>> { it.first == Group.OTHER }.thenBy { it.first.ordinal })
+        .map { (g, list) -> g to list.sortedBy { it.label.lowercase(Locale.ROOT) } }
+    return HomePlan(front, folders, sortJudged(review).map { it.row })
 }

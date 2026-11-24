@@ -47,6 +47,9 @@ class MainActivity : ComponentActivity() {
     private var confirmed: Set<String> = emptySet()
     private var fresh: Set<String> = emptySet()
     private var judged: List<Judged> = emptyList()
+    /** false＝気になる順の点検、true＝種類ごとの整理 */
+    private var byGroup = false
+    private var groupOverrides: Map<String, Group> = emptyMap()
 
     /** 削除の確認画面を出しているアプリ */
     private var deleting: AppRow? = null
@@ -58,6 +61,10 @@ class MainActivity : ComponentActivity() {
     private lateinit var empty: TextView
     private lateinit var list: ListView
     private val filterChips = LinkedHashMap<Filter, TextView>()
+    private lateinit var checkTab: TextView
+    private lateinit var groupTab: TextView
+    private lateinit var planButton: TextView
+    private lateinit var hint: TextView
     private val adapter = RowAdapter()
     private var adView: AdView? = null
 
@@ -67,6 +74,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         store = Store(this)
+        groupOverrides = store.groups
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(buildUi())
         render()
@@ -133,6 +141,10 @@ class MainActivity : ComponentActivity() {
         )
         root.addView(newBanner, margins(dp(16), 0, dp(16), dp(10)))
 
+        checkTab = chip("気になる順に点検") { byGroup = false; render(); list.setSelection(0) }
+        groupTab = chip("種類ごとに整理") { byGroup = true; render(); list.setSelection(0) }
+        root.addView(chipRow(listOf(checkTab, groupTab)))
+
         for (f in listOf(Filter.ALL, Filter.BAD, Filter.ASK, Filter.OK, Filter.NEW)) {
             filterChips[f] = chip("") { filter = f; render(); list.setSelection(0) }
         }
@@ -143,7 +155,9 @@ class MainActivity : ComponentActivity() {
             divider = null
             clipToPadding = false
             setPadding(0, dp(2), 0, dp(8))
-            setOnItemClickListener { _, _, pos, _ -> showDetail(this@MainActivity.adapter.getItem(pos)) }
+            setOnItemClickListener { _, _, pos, _ ->
+                (this@MainActivity.adapter.getItem(pos) as? Judged)?.let { showDetail(it) }
+            }
         }
         empty = TextView(this).apply {
             textSize = 15f
@@ -154,13 +168,25 @@ class MainActivity : ComponentActivity() {
         root.addView(list, LinearLayout.LayoutParams(-1, 0, 1f))
         root.addView(empty, LinearLayout.LayoutParams(-1, 0, 1f))
 
-        root.addView(TextView(this).apply {
-            text = "アプリをタップすると、くわしい内容を見て「確認済み」にしたり、削除したりできます"
+        planButton = TextView(this).apply {
+            text = "ホーム画面の並べ方の案を見る"
+            textSize = 15f
+            setTypeface(Typeface.DEFAULT, Typeface.BOLD)
+            setTextColor(CARD)
+            gravity = Gravity.CENTER
+            background = roundRect(ACCENT, dp(22).toFloat())
+            setPadding(dp(12), dp(11), dp(12), dp(11))
+            setOnClickListener { showHomePlan() }
+        }
+        root.addView(planButton, margins(dp(16), dp(6), dp(16), 0))
+
+        hint = TextView(this).apply {
             textSize = 12f
             setTextColor(SUB)
             gravity = Gravity.CENTER
             setPadding(dp(16), dp(6), dp(16), 0)
-        })
+        }
+        root.addView(hint)
         root.addView(TextView(this).apply {
             text = "プライバシーポリシー"
             textSize = 12f
@@ -262,7 +288,13 @@ class MainActivity : ComponentActivity() {
         // 増えたアプリがなくなったら、その絞り込みのままにしない
         if (filter == Filter.NEW && count(Filter.NEW) == 0) filter = Filter.ALL
         val shown = judged.filter { matches(it, filter) }
-        adapter.show(shown, now)
+        val items: List<Any> = if (!byGroup) shown else sections(shown, ::groupFor).flatMap { listOf<Any>(it) + it.items }
+        adapter.show(items, now)
+        checkTab.setChipOn(!byGroup)
+        groupTab.setChipOn(byGroup)
+        planButton.visibility = if (byGroup && loaded && rows.isNotEmpty()) View.VISIBLE else View.GONE
+        hint.text = if (byGroup) "同じ種類のアプリを見くらべて、使っていないものを減らせます。種類は、アプリをタップして変えられます"
+        else "アプリをタップすると、くわしい内容を見て「確認済み」にしたり、削除したりできます"
 
         for ((f, chip) in filterChips) {
             val name = when (f) {
@@ -342,6 +374,73 @@ class MainActivity : ComponentActivity() {
             store.seen = (store.seen ?: emptySet()) + pkg
         }
         render()
+    }
+
+    // ---------- 種類ごとの整理 ----------
+
+    /** 本人が変えた種類があればそれを、なければ自動で決めた種類を使う */
+    private fun groupFor(row: AppRow): Group = groupOverrides[row.pkg] ?: groupOf(row)
+
+    private fun pickGroup(row: AppRow) {
+        val groups = Group.entries
+        AlertDialog.Builder(this)
+            .setTitle("「${row.label}」の種類")
+            .setSingleChoiceItems(groups.map { it.title }.toTypedArray(), groups.indexOf(groupFor(row))) { d, which ->
+                groupOverrides = groupOverrides + (row.pkg to groups[which])
+                store.groups = groupOverrides
+                d.dismiss()
+                render()
+            }
+            .setNegativeButton("やめる", null)
+            .show()
+    }
+
+    /**
+     * ホーム画面の並べ方の案。ほかのアプリがホーム画面を並べ替えることは Android ではできないので、
+     * 案を見せて、本人に手で並べてもらう
+     */
+    private fun showHomePlan() {
+        val plan = homePlan(judged, System.currentTimeMillis(), ::groupFor)
+        val body = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(22), dp(6), dp(22), dp(4))
+        }
+        fun block(title: String, note: String?, apps: List<AppRow>, bg: Int) {
+            if (apps.isEmpty()) return
+            body.addView(LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                background = roundRect(bg, dp(12).toFloat())
+                setPadding(dp(12), dp(10), dp(12), dp(10))
+                addView(TextView(context).apply {
+                    text = "$title（${apps.size}個）"
+                    textSize = 15f
+                    setTextColor(INK)
+                    setTypeface(Typeface.DEFAULT, Typeface.BOLD)
+                })
+                if (note != null) addView(TextView(context).apply { text = note; textSize = 12f; setTextColor(SUB) })
+                addView(TextView(context).apply {
+                    text = apps.joinToString("、") { it.label }
+                    textSize = 14f
+                    setTextColor(INK)
+                    setPadding(0, dp(4), 0, 0)
+                })
+            }, margins(0, dp(8), 0, 0))
+        }
+        body.addView(TextView(this).apply {
+            text = "ホーム画面は、このアプリからは並べ替えられません。下の案を見ながら、アイコンを長押しして動かしてください。" +
+                "アイコンをほかのアイコンに重ねるとフォルダになります。"
+            textSize = 13f
+            setTextColor(SUB)
+        })
+        block("1 枚目に置く", "この ${HOME_DAYS}日のうちに使ったアプリ", plan.front, Level.OK.bg())
+        for ((g, apps) in plan.folders) block("フォルダ「${g.title}」", null, apps, 0xFFF1F3F5.toInt())
+        block("並べる前に確かめる", "「大丈夫？」「アカンで！」のアプリ。いらなければ削除、使うなら「確認済み」に", plan.review, Level.ASK.bg())
+
+        AlertDialog.Builder(this)
+            .setTitle("ホーム画面の並べ方の案")
+            .setView(ScrollView(this).apply { addView(body) })
+            .setPositiveButton("閉じる", null)
+            .show()
     }
 
     /** 許可の画面を開く前に、何を調べて何に使うのかを伝える */
@@ -426,6 +525,7 @@ class MainActivity : ComponentActivity() {
             else "本体 ${sizeLabel(row.appBytes)}（データは使用状況の許可が必要）"
         )
         fact("入手元", sourceLabel(this, row))
+        fact("種類", groupFor(row).title)
         fact("パッケージ名", row.pkg)
 
         val dialog = AlertDialog.Builder(this)
@@ -447,6 +547,7 @@ class MainActivity : ComponentActivity() {
         val isConfirmed = row.pkg in confirmed
         if (isConfirmed) action("「確認済み」を取り消す", ACCENT) { setConfirmed(row.pkg, false) }
         else action("確認済みにする（使っていい）", ACCENT, filled = true) { setConfirmed(row.pkg, true) }
+        action("種類を変える（いま：${groupFor(row).title}）", INK) { pickGroup(row) }
         action("Play ストアのページを見る", INK) { openStorePage(row.pkg) }
         action("Android の設定で見る（権限・通知など）", INK) {
             try {
@@ -501,10 +602,11 @@ class MainActivity : ComponentActivity() {
     private class Holder(val card: View, val icon: ImageView, val name: TextView, val why: TextView, val facts: TextView, val mark: TextView)
 
     private inner class RowAdapter : BaseAdapter() {
-        private var items: List<Judged> = emptyList()
+        /** Judged（アプリ）か Section（種類の見出し） */
+        private var items: List<Any> = emptyList()
         private var now = 0L
 
-        fun show(items: List<Judged>, now: Long) {
+        fun show(items: List<Any>, now: Long) {
             this.items = items
             this.now = now
             notifyDataSetChanged()
@@ -512,12 +614,18 @@ class MainActivity : ComponentActivity() {
 
         override fun getCount() = items.size
         override fun getItem(position: Int) = items[position]
-        override fun getItemId(position: Int) = items[position].row.pkg.hashCode().toLong()
+        override fun getItemId(position: Int) = position.toLong()
+        override fun getViewTypeCount() = 2
+        override fun getItemViewType(position: Int) = if (items[position] is Section) 1 else 0
+        override fun isEnabled(position: Int) = items[position] is Judged
+        override fun areAllItemsEnabled() = false
 
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+            val item = items[position]
+            if (item is Section) return header(item, convertView)
             val view = convertView ?: newRow()
             val h = view.tag as Holder
-            val j = items[position]
+            val j = item as Judged
             val level = j.verdict.level
             h.card.background = roundRect(level.bg(), dp(14).toFloat())
             h.icon.setImageDrawable(icons[j.row.pkg])
@@ -528,6 +636,23 @@ class MainActivity : ComponentActivity() {
             h.facts.text = factsLabel(j.row, now)
             h.mark.text = level.title()
             h.mark.setTextColor(level.ink())
+            return view
+        }
+
+        /** 種類の見出し。同じ種類が 2 個以上あるときは、見くらべるよう声をかける */
+        private fun header(s: Section, convertView: View?): View {
+            val c = this@MainActivity
+            val view = (convertView as? LinearLayout) ?: LinearLayout(c).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(20), dp(14), dp(20), dp(2))
+                addView(TextView(c).apply { textSize = 17f; setTextColor(INK); setTypeface(Typeface.DEFAULT, Typeface.BOLD) })
+                addView(TextView(c).apply { textSize = 12f; setTextColor(SUB) })
+            }
+            (view.getChildAt(0) as TextView).text = "${s.group.title}　${s.items.size}個 ・ ${sizeLabel(s.bytes)}"
+            (view.getChildAt(1) as TextView).apply {
+                text = "同じ種類が ${s.items.size}個あります（使っていない順）"
+                visibility = if (s.items.size >= 2 && s.group != Group.OTHER) View.VISIBLE else View.GONE
+            }
             return view
         }
 
