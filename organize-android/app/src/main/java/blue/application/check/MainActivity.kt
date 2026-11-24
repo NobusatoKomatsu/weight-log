@@ -293,7 +293,7 @@ class MainActivity : ComponentActivity() {
         checkTab.setChipOn(!byGroup)
         groupTab.setChipOn(byGroup)
         planButton.visibility = if (byGroup && loaded && rows.isNotEmpty()) View.VISIBLE else View.GONE
-        hint.text = if (byGroup) "同じ種類のアプリを見くらべて、使っていないものを減らせます。種類は、アプリをタップして変えられます"
+        hint.text = if (byGroup) "種類はアプリの名前などからの推測で、外れることがあります（当たらないものは「そのほか」）。アプリをタップすると種類を変えられます"
         else "アプリをタップすると、くわしい内容を見て「確認済み」にしたり、削除したりできます"
 
         for ((f, chip) in filterChips) {
