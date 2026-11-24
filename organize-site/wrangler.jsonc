@@ -1,0 +1,11 @@
+// アプリ整理の公式サイト（application.blue）を Cloudflare Workers の静的アセットとして公開する設定
+{
+  "name": "app-check",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./public",
+    // /privacy で privacy.html を返す
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}

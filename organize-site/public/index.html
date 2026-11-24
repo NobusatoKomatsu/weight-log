@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アプリ整理 — 入っているアプリを、信号の色で点検</title>
+<meta name="description" content="入っているアプリを水色・黄・赤の 3 色で点検する Android アプリ。覚えのないアプリ、使っていないアプリ、同じ種類が重なっているアプリがひと目でわかります。">
+<link rel="icon" href="/icon.png">
+<link rel="canonical" href="https://application.blue/">
+<meta property="og:title" content="アプリ整理">
+<meta property="og:image" content="https://application.blue/icon.png">
+<meta property="og:description" content="入っているアプリを、信号の色で点検。">
+<style>
+  :root { --bg: #FFFFFF; --card: #F3F6F9; --ink: #0B0B0B; --muted: #5C5C5C; --line: #D4D4D4; --accent: #1479C9;
+    --ok: #DDF1FB; --ok-ink: #0A5C8F; --ask: #FFF1B8; --ask-ink: #7A5200; --bad: #FFD9D6; --bad-ink: #B3100A; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0B0F14; --card: #18202A; --ink: #F5F5F5; --muted: #A8B0B8; --line: #333B45; --accent: #5BB4F0; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.8 system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; }
+  .hero { text-align: center; padding: 44px 16px; border-bottom: 4px solid var(--accent); }
+  .hero img { width: 104px; height: 104px; border-radius: 24px; box-shadow: 0 10px 28px rgba(0,0,0,.14); }
+  .hero h1 { font-size: clamp(1.7rem, 7vw, 3rem); font-weight: 900; margin: 20px 0 6px; line-height: 1.3; }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero .name { font-size: .95rem; font-weight: 700; margin: 0; }
+  .hero .lead { font-size: clamp(1.05rem, 4vw, 1.25rem); color: var(--muted); margin: 10px 0 0; }
+  .hero p { text-wrap: balance; word-break: keep-all; overflow-wrap: anywhere; }
+  .badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 20px; }
+  .badge { padding: 4px 14px; border-radius: 999px; background: var(--ink); color: var(--bg); font-size: .9rem; font-weight: 700; }
+  main { max-width: 860px; margin: 0 auto; padding: 0 16px 48px; }
+  h2 { font-size: 1.4rem; font-weight: 900; text-align: center; margin: 48px 0 16px; }
+  h2::after { content: ""; display: block; width: 44px; height: 4px; background: var(--accent); margin: 8px auto 0; border-radius: 2px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border-radius: 16px; padding: 20px; }
+  .card h3 { margin: 0 0 4px; font-size: 1.05rem; }
+  .card p { margin: 0; color: var(--muted); font-size: .95rem; }
+  .light { border-radius: 16px; padding: 18px 20px; color: #0B0B0B; }
+  .light h3 { margin: 0 0 4px; font-size: 1.15rem; }
+  .light p { margin: 0; font-size: .95rem; }
+  .light.ok { background: var(--ok); } .light.ok h3 { color: var(--ok-ink); }
+  .light.ask { background: var(--ask); } .light.ask h3 { color: var(--ask-ink); }
+  .light.bad { background: var(--bad); } .light.bad h3 { color: var(--bad-ink); }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
+  .step { text-align: center; }
+  .step img { width: 100%; max-width: 260px; height: auto; border-radius: 20px; border: 2px solid var(--ink); }
+  .step h3 { margin: 12px 0 2px; font-size: 1.05rem; }
+  .step p { margin: 0; color: var(--muted); font-size: .95rem; }
+  .note { background: var(--card); border-radius: 16px; padding: 20px; font-size: .95rem; }
+  .caption { text-align: center; color: var(--muted); font-size: .85rem; margin-top: 12px; }
+  a { color: var(--accent); }
+  footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 24px 16px 40px; }
+  footer a { color: var(--muted); margin: 0 6px; }
+</style>
+</head>
+<body>
+<section class="hero">
+  <img src="/icon.png" alt="アプリ整理のアイコン">
+  <h1>入っているアプリを<wbr><em>信号の色で点検</em></h1>
+  <p class="name">アプリ整理</p>
+  <p class="lead">覚えのないアプリ、<wbr>使っていないアプリ、<wbr>同じ種類が重なっているアプリが、<wbr>ひと目でわかります。</p>
+  <div class="badges"><span class="badge">Android 9 以上</span><span class="badge">無料（広告あり）</span><span class="badge">Google Play で近日公開</span></div>
+</section>
+
+<main>
+  <h2>3 つの色で見分ける</h2>
+  <div class="grid">
+    <div class="light ok"><h3>使っていい</h3><p>最近使っているアプリ、自分で「確認済み」にしたアプリ。</p></div>
+    <div class="light ask"><h3>大丈夫？</h3><p>使用記録がない、30 日以上使っていない、前回の点検のあとに増えたアプリ。</p></div>
+    <div class="light bad"><h3>アカンで！</h3><p>Google Play 以外から入っていて、使用記録もないアプリ。</p></div>
+  </div>
+  <div class="note" style="margin-top:16px">
+    色は、入った日・最後に使った日・入手元という<strong>事実だけ</strong>で決めています。アプリが安全かどうかを判定するものではありません（ウイルスの検出はしません）。色の理由は、アプリごとに表示します。
+  </div>
+
+  <h2>使い方</h2>
+  <div class="steps">
+    <div class="step"><img src="/shot-list.png" alt="アプリが赤・黄・水色に色分けされた一覧" width="540" height="1078" loading="lazy"><h3>気になる順に点検</h3><p>赤、黄、水色の順に並びます。前回から増えたアプリも知らせます。</p></div>
+    <div class="step"><img src="/shot-detail.png" alt="アプリの詳細。入った日、最後に使った日、容量、入手元" width="540" height="1078" loading="lazy"><h3>1 つずつ判断</h3><p>くわしい内容を見て、「確認済み」にするか、削除するかを決めます。</p></div>
+    <div class="step"><img src="/shot-groups.png" alt="地図、ゲームなど種類ごとにまとめた一覧" width="540" height="1078" loading="lazy"><h3>種類ごとに整理</h3><p>同じ種類のアプリを見くらべて、使っていないものを減らせます。</p></div>
+    <div class="step"><img src="/shot-home.png" alt="ホーム画面の並べ方の案" width="540" height="1078" loading="lazy"><h3>ホーム画面の案</h3><p>1 枚目に置くアプリと、フォルダの分け方の案を出します。</p></div>
+  </div>
+  <p class="caption">画面はサンプルのアプリで表示したものです。</p>
+
+  <h2>できること</h2>
+  <div class="grid">
+    <div class="card"><h3>増えたアプリに気づける</h3><p>開くたびに、前回の点検から増えたアプリを知らせます。いつの間にか入ったアプリを見逃しません。</p></div>
+    <div class="card"><h3>アプリごとの詳細</h3><p>入った日、最後に使った日、容量の内訳、入手元を表示。Play ストアのページや Android の設定も開けます。</p></div>
+    <div class="card"><h3>同じ種類の重なりがわかる</h3><p>ゲーム、地図・乗り物、お金など 13 種類にまとめます。種類は名前などからの推測で、自分で変えられます。</p></div>
+    <div class="card"><h3>1 個ずつ削除</h3><p>いらないアプリは、詳細からその場で削除。Android の確認が必ず出ます。</p></div>
+  </div>
+
+  <h2>ご注意</h2>
+  <div class="note">
+    ホーム画面のアイコンは、Android の仕組み上、このアプリからは並べ替えられません。並べ方の案を見ながら、ご自身で動かしてください。削除したアプリと、その中のデータは元に戻せません。
+  </div>
+
+  <h2>プライバシーについて</h2>
+  <div class="note">
+    アプリ整理は、入っているアプリの一覧・最後に使った日・容量を、この端末の中で画面に表示するためだけに読み取り、外部へ送信することはありません。画面の下に広告（Google AdMob）を表示しますが、これらの情報を広告に使うことはありません。
+    詳しくは <a href="/privacy">プライバシーポリシー</a> をご覧ください。
+  </div>
+
+  <h2>お問い合わせ</h2>
+  <div class="note" style="text-align:center">
+    ご意見・不具合のご報告は <a href="mailto:support@application.blue">support@application.blue</a> までお送りください。
+  </div>
+</main>
+
+<footer>
+  <a href="/">ホーム</a> ・ <a href="/privacy">プライバシーポリシー</a> ・ <a href="mailto:support@application.blue">お問い合わせ</a>
+  <p>© 2026 中央会計株式会社（CHUO KAIKEI K.K.）</p>
+</footer>
+</body>
+</html>
