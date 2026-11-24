@@ -73,6 +73,7 @@ fun loadApps(c: Context): Loaded {
             lastUsed = used[pkg]?.takeIf { it >= MIN_VALID_TIME } ?: 0,
             installed = installed,
             bytes = bytes,
+            source = sourceOf(installerOf(pm, pkg)),
         )
         try {
             icons[pkg] = app.loadIcon(pm)
@@ -81,6 +82,18 @@ fun loadApps(c: Context): Loaded {
         }
     }
     return Loaded(rows, icons, hasUsage)
+}
+
+/** このアプリを入れたアプリ（Google Play なら com.android.vending）。分からなければ null */
+private fun installerOf(pm: PackageManager, pkg: String): String? = try {
+    if (Build.VERSION.SDK_INT >= 30) {
+        pm.getInstallSourceInfo(pkg).installingPackageName
+    } else {
+        @Suppress("DEPRECATION")
+        pm.getInstallerPackageName(pkg)
+    }
+} catch (e: Exception) {
+    null
 }
 
 /** アプリ本体＋データ＋キャッシュ。「使用状況へのアクセス」が必要 */

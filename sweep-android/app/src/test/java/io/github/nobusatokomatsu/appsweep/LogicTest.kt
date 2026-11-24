@@ -16,6 +16,9 @@ class LogicTest {
     @Test fun sortsByUnused() =
         assertEquals(listOf("neverOld", "old", "neverNew", "recent"), sortRows(all, Sort.UNUSED).map { it.pkg })
 
+    @Test fun sortsByNewest() =
+        assertEquals(listOf("neverNew", "recent", "neverOld", "old"), sortRows(all, Sort.NEW).map { it.pkg })
+
     @Test fun sortsBySize() =
         assertEquals(listOf("neverNew", "recent", "neverOld", "old"), sortRows(all, Sort.SIZE).map { it.pkg })
 
@@ -35,6 +38,21 @@ class LogicTest {
         assertEquals("最後に使用: 2日前", usageLabel(recent, now, true))
         assertEquals("使用記録なし ・ 追加: 3日前", usageLabel(neverNew, now, true))
         assertEquals("追加: 3日前", usageLabel(neverNew, now, false))
+    }
+
+    @Test fun usageWordingNewestFirst() {
+        assertEquals("追加: 約1年前 ・ 使用: 2日前", usageLabel(recent, now, true, newestFirst = true))
+        assertEquals("追加: 3日前 ・ 使用記録なし", usageLabel(neverNew, now, true, newestFirst = true))
+        assertEquals("追加: 3日前", usageLabel(neverNew, now, false, newestFirst = true))
+    }
+
+    @Test fun marksAppsNotFromPlay() {
+        assertEquals(Source.PLAY, sourceOf("com.android.vending"))
+        assertEquals(Source.OTHER, sourceOf("com.google.android.packageinstaller"))
+        assertEquals(Source.OTHER, sourceOf(null))
+        val side = neverNew.copy(source = Source.OTHER)
+        assertEquals("使用記録なし ・ 追加: 3日前 ・ Play 以外", usageLabel(side, now, true))
+        assertEquals("追加: 3日前 ・ 使用記録なし ・ Play 以外", usageLabel(side, now, true, newestFirst = true))
     }
 
     @Test fun sizeWording() {

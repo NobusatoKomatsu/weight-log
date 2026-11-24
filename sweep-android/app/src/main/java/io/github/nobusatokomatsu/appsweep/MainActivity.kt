@@ -120,6 +120,7 @@ class MainActivity : ComponentActivity() {
         root.addView(chipRow(
             listOf(
                 Sort.UNUSED to "使っていない順",
+                Sort.NEW to "新しい順",
                 Sort.SIZE to "大きい順",
                 Sort.NAME to "名前順",
             ).map { (s, label) ->
@@ -503,7 +504,9 @@ class MainActivity : ComponentActivity() {
             h.icon.setImageDrawable(icons[row.pkg])
             h.name.text = row.label
             // 容量は必ず見えるよう先に書く（長いと後ろが省略されるため）
-            h.sub.text = "${sizeLabel(row.bytes)} ・ ${usageLabel(row, now, hasUsage)}"
+            // 新しい順では、入った日と使用の有無を 1 行で見せたいので、容量は出さない
+            h.sub.text = if (sort == Sort.NEW) usageLabel(row, now, hasUsage, newestFirst = true)
+            else "${sizeLabel(row.bytes)} ・ ${usageLabel(row, now, hasUsage)}"
             h.check.isChecked = kept
             // 使い回した行で、前のアプリのチェックの動きが残って見えないようにする
             h.check.jumpDrawablesToCurrentState()
