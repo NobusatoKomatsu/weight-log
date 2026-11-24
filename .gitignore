@@ -5,3 +5,6 @@ android/app/build/
 sweep-android/.gradle/
 sweep-android/build/
 sweep-android/app/build/
+organize-android/.gradle/
+organize-android/build/
+organize-android/app/build/

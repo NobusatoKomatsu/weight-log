@@ -1,0 +1,65 @@
+package blue.application.check
+
+import android.content.Context
+import android.graphics.drawable.GradientDrawable
+import android.view.View
+import android.widget.TextView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import kotlin.math.roundToInt
+
+// 文字は黒、操作できるところは青（application.blue）
+const val INK = 0xFF0B0B0B.toInt()
+const val SUB = 0xFF5C5C5C.toInt()
+const val ACCENT = 0xFF1479C9.toInt()
+const val DANGER = 0xFFF5190F.toInt()
+const val CARD = 0xFFFFFFFF.toInt()
+const val LINE = 0xFFD4D4D4.toInt()
+const val OFF = 0xFFBDBDBD.toInt()
+
+// 点検の結果ごとの色：使っていい＝水色、大丈夫？＝黄、アカンで！＝赤（背景と、その上の文字）
+fun Level.bg(): Int = when (this) {
+    Level.OK -> 0xFFDDF1FB.toInt()
+    Level.ASK -> 0xFFFFF1B8.toInt()
+    Level.BAD -> 0xFFFFD9D6.toInt()
+}
+
+fun Level.ink(): Int = when (this) {
+    Level.OK -> 0xFF0A5C8F.toInt()
+    Level.ASK -> 0xFF7A5200.toInt()
+    Level.BAD -> 0xFFB3100A.toInt()
+}
+
+fun Context.dp(v: Number): Int = (v.toFloat() * resources.displayMetrics.density).roundToInt()
+
+fun roundRect(color: Int, radius: Float, strokeWidth: Int = 0, strokeColor: Int = 0) =
+    GradientDrawable().apply {
+        cornerRadius = radius
+        setColor(color)
+        if (strokeWidth > 0) setStroke(strokeWidth, strokeColor)
+    }
+
+/** 角の丸い小さなボタン。on のときは塗りつぶし */
+fun Context.chip(label: String, onClick: () -> Unit) = TextView(this).apply {
+    text = label
+    textSize = 14f
+    setPadding(dp(14), dp(8), dp(14), dp(8))
+    isClickable = true
+    setOnClickListener { onClick() }
+    setChipOn(false)
+}
+
+fun TextView.setChipOn(on: Boolean) {
+    setTextColor(if (on) CARD else INK)
+    background = if (on) roundRect(ACCENT, context.dp(18).toFloat())
+    else roundRect(CARD, context.dp(18).toFloat(), context.dp(1), LINE)
+}
+
+/** edge-to-edge 表示で、システムバーの分だけ内側に余白をとる */
+fun View.padForSystemBars() {
+    ViewCompat.setOnApplyWindowInsetsListener(this) { v, insets ->
+        val b = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+        v.setPadding(b.left, b.top, b.right, b.bottom)
+        insets
+    }
+}
