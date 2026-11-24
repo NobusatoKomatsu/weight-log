@@ -96,12 +96,11 @@ fun ago(t: Long, now: Long): String {
     }
 }
 
-/** 一覧の 2 行目：入った日・最後に使った日・容量 */
-fun factsLabel(row: AppRow, now: Long, hasUsage: Boolean): String {
+/** 一覧の 3 行目：入った日・最後に使った日・容量。「使用記録なし」は理由の行に出るので、ここには書かない */
+fun factsLabel(row: AppRow, now: Long): String {
     val parts = ArrayList<String>()
     parts += "追加: ${ago(row.installed, now)}"
     if (row.lastUsed > 0) parts += "使用: ${ago(row.lastUsed, now)}"
-    else if (hasUsage) parts += "使用記録なし"
     parts += sizeLabel(row.bytes)
     return parts.joinToString(" ・ ")
 }

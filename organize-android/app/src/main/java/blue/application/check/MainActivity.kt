@@ -410,7 +410,7 @@ class MainActivity : ComponentActivity() {
         fun fact(name: String, value: String) = body.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(0, dp(6), 0, 0)
-            addView(TextView(context).apply { text = name; textSize = 13f; setTextColor(SUB) }, LinearLayout.LayoutParams(dp(92), -2))
+            addView(TextView(context).apply { text = name; textSize = 13f; setTextColor(SUB) }, LinearLayout.LayoutParams(dp(104), -2))
             addView(TextView(context).apply { text = value; textSize = 14f; setTextColor(INK) }, LinearLayout.LayoutParams(0, -2, 1f))
         })
         fact("入った日", day(row.installed))
@@ -525,7 +525,7 @@ class MainActivity : ComponentActivity() {
             h.why.text = j.verdict.reasons.joinToString(" ・ ")
             h.why.setTextColor(level.ink())
             h.why.visibility = if (j.verdict.reasons.isEmpty()) View.GONE else View.VISIBLE
-            h.facts.text = factsLabel(j.row, now, hasUsage)
+            h.facts.text = factsLabel(j.row, now)
             h.mark.text = level.title()
             h.mark.setTextColor(level.ink())
             return view

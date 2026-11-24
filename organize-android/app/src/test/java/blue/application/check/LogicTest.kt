@@ -68,9 +68,8 @@ class LogicTest {
     }
 
     @Test fun wording() {
-        assertEquals("追加: 約1年前 ・ 使用: 2日前 ・ 900 MB", factsLabel(daily, now, true))
-        assertEquals("追加: 2日前 ・ 使用記録なし ・ 50 MB", factsLabel(neverPlay, now, true))
-        assertEquals("追加: 2日前 ・ 50 MB", factsLabel(neverPlay, now, false))
+        assertEquals("追加: 約1年前 ・ 使用: 2日前 ・ 900 MB", factsLabel(daily, now))
+        assertEquals("追加: 2日前 ・ 50 MB", factsLabel(neverPlay, now))
         assertEquals("今日", ago(now + 5000, now))
         assertEquals("約2年前", ago(daysAgo(800), now))
         assertEquals("1.5 GB", sizeLabel(1_540_000_000))
