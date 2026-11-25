@@ -24,8 +24,10 @@
   .top { max-width: 860px; margin: 0 auto; padding: 14px 16px 0; text-align: right; }
   .top a { font-size: .9rem; font-weight: 700; color: var(--ink); text-decoration: none; border: 2px solid var(--ink); border-radius: 999px; padding: 2px 14px; }
   .hero { text-align: center; padding: 20px 16px 44px; border-bottom: 4px solid var(--accent); }
-  .hero img { width: 104px; height: 104px; border-radius: 24px; box-shadow: 0 10px 28px rgba(0,0,0,.14); }
-  .hero h1 { font-size: clamp(1.7rem, 7vw, 3rem); font-weight: 900; margin: 20px 0 6px; line-height: 1.3; }
+  .logo { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px 22px; margin: 12px 0 4px; }
+  .logo svg { width: clamp(170px, 46vw, 260px); height: auto; flex: none; }
+  .logo span { font-size: clamp(2.4rem, 11vw, 4.4rem); font-weight: 900; line-height: 1.1; letter-spacing: .02em; }
+  .hero h1 { font-size: clamp(1.4rem, 5.5vw, 2.2rem); font-weight: 900; margin: 22px 0 6px; line-height: 1.3; }
   .hero h1 em { font-style: normal; color: var(--accent); }
   .hero .name { font-size: .95rem; font-weight: 700; margin: 0; }
   .hero .lead { font-size: clamp(1.05rem, 4vw, 1.25rem); color: var(--muted); margin: 10px 0 0; }
@@ -60,9 +62,8 @@
 <body>
 <div class="top"><a href="/en/" hreflang="en">English</a></div>
 <section class="hero">
-  <img src="/icon.png" alt="アプリ整理のアイコン">
+  <div class="logo" role="img" aria-label="アプリ整理のロゴ：水色・黄・赤の信号"><svg viewBox="0 0 156 60" aria-hidden="true"><rect x="2" y="2" width="152" height="56" rx="28" fill="#14171A" stroke="#6B7280" stroke-width="2"/><circle cx="32" cy="30" r="19" fill="#35B6F2"/><circle cx="78" cy="30" r="19" fill="#FFC400"/><circle cx="124" cy="30" r="19" fill="#F5190F"/><g fill="#fff" opacity=".45"><ellipse cx="26" cy="22" rx="6" ry="4"/><ellipse cx="72" cy="22" rx="6" ry="4"/><ellipse cx="118" cy="22" rx="6" ry="4"/></g></svg><span>アプリ整理</span></div>
   <h1>入っているアプリを<wbr><em>信号の色で点検</em></h1>
-  <p class="name">アプリ整理</p>
   <p class="lead">覚えのないアプリ、<wbr>使っていないアプリ、<wbr>同じ種類が重なっているアプリが、<wbr>ひと目でわかります。</p>
   <div class="badges"><span class="badge">Android 9 以上</span><span class="badge">無料（広告あり）</span><span class="badge">Google Play で近日公開</span></div>
 </section>
