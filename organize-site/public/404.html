@@ -10,10 +10,23 @@
   @media (prefers-color-scheme: dark) { :root { --bg: #0B0B0B; --ink: #F5F5F5; --accent: #5BB4F0; } }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.8 system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; text-align: center; padding: 96px 16px; }
   a { color: var(--accent); }
+  .services { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 0 auto 18px; padding: 0 16px; font-size: .85rem; text-align: center; }
+  .services p { flex-basis: 100%; margin: 0 0 2px; font-weight: 700; color: var(--ink); }
+  .services a { margin: 0; padding: 3px 14px; border: 1px solid currentColor; border-radius: 999px; color: var(--ink); text-decoration: none; }
+  .services a[aria-current] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 </style>
 </head>
 <body>
   <h1>ページが見つかりません</h1>
   <p><a href="/">アプリ整理のトップへ</a></p>
+  <footer style="margin-top:48px">
+  <nav class="services" aria-label="サービス一覧">
+    <p>サービス一覧</p>
+    <a href="https://notification.sucks/">通知パージ</a>
+    <a href="https://memoru.info/">メモる</a>
+    <a href="https://applications.sucks/">アプリ一掃</a>
+    <a href="https://application.blue/" aria-current="page">アプリ整理</a>
+  </nav>
+  </footer>
 </body>
 </html>
