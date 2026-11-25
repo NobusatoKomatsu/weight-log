@@ -32,6 +32,17 @@
   .hero p { text-wrap: balance; word-break: keep-all; overflow-wrap: anywhere; }
   .badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 20px; }
   .badge { padding: 4px 14px; border-radius: 999px; background: var(--ink); color: var(--bg); font-size: .9rem; font-weight: 700; }
+  .cta { margin: 22px 0 0; }
+  .cta a { display: inline-block; padding: 12px 28px; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 900; text-decoration: none; }
+  .notify { background: var(--card); border-radius: 16px; padding: 24px 20px; text-align: center; }
+  .notify p { margin: 0 0 14px; }
+  .notify form { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .notify form[hidden] { display: none; }
+  .notify input[type=email] { flex: 1 1 240px; max-width: 380px; min-width: 0; font: inherit; padding: 12px 16px; border: 2px solid var(--ink); border-radius: 999px; background: var(--bg); color: var(--ink); }
+  .notify button { font: inherit; font-weight: 900; padding: 12px 26px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; cursor: pointer; }
+  .notify button:disabled { opacity: .6; cursor: default; }
+  .notify .small { color: var(--muted); font-size: .85rem; margin: 14px 0 0; }
+  .notify .done { font-weight: 900; margin: 0; }
   main { max-width: 860px; margin: 0 auto; padding: 0 16px 48px; }
   h2 { font-size: 1.4rem; font-weight: 900; text-align: center; margin: 48px 0 16px; }
   h2::after { content: ""; display: block; width: 44px; height: 4px; background: var(--accent); margin: 8px auto 0; border-radius: 2px; }
@@ -65,6 +76,7 @@
   <p class="name">アプリ整理</p>
   <p class="lead">覚えのないアプリ、<wbr>使っていないアプリ、<wbr>同じ種類が重なっているアプリが、<wbr>ひと目でわかります。</p>
   <div class="badges"><span class="badge">Android 9 以上</span><span class="badge">無料（広告あり）</span><span class="badge">Google Play で近日公開</span></div>
+  <p class="cta"><a href="#notify">公開のお知らせを受け取る</a></p>
 </section>
 
 <main>
@@ -86,6 +98,42 @@
     <div class="step"><img src="/shot-home.png" alt="ホーム画面の並べ方の案" width="540" height="1078" loading="lazy"><h3>ホーム画面の案</h3><p>1 枚目に置くアプリと、フォルダの分け方の案を出します。</p></div>
   </div>
   <p class="caption">画面はサンプルのアプリで表示したものです。</p>
+
+  <h2 id="notify">公開のお知らせを受け取る</h2>
+  <div class="notify">
+    <p>Google Play で公開したら、メールで 1 回だけお知らせします。</p>
+    <form id="notify-form" action="FORM_ACTION_PENDING" method="post" target="_blank">
+      <input type="email" name="ENTRY_PENDING" required autocomplete="email" placeholder="メールアドレス" aria-label="メールアドレス">
+      <button type="submit">登録する</button>
+    </form>
+    <p class="done" id="notify-done" hidden role="status">登録しました。公開したらメールでお知らせします。</p>
+    <p class="small" id="notify-err" hidden role="alert" style="color:var(--bad-ink)">送信できませんでした。通信の状態を確かめて、もう一度お試しください。</p>
+    <p class="small">入力されたメールアドレスは、公開のお知らせにだけ使い、お知らせのあと削除します。詳しくは <a href="/privacy">プライバシーポリシー</a> をご覧ください。</p>
+  </div>
+  <script>
+    // Google フォームへ直接送る（ページは移動しない）。スクリプトが使えない環境では、フォームがそのまま別タブで送信する
+    (function () {
+      var form = document.getElementById('notify-form');
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var button = form.querySelector('button'), label = button.textContent;
+        var err = document.getElementById('notify-err');
+        err.hidden = true;
+        button.disabled = true;
+        button.textContent = '送信中…';
+        fetch(form.action, { method: 'POST', mode: 'no-cors', body: new URLSearchParams(new FormData(form)) })
+          .then(function () {
+            form.hidden = true;
+            document.getElementById('notify-done').hidden = false;
+          })
+          .catch(function () {
+            err.hidden = false;
+            button.disabled = false;
+            button.textContent = label;
+          });
+      });
+    })();
+  </script>
 
   <h2>できること</h2>
   <div class="grid">

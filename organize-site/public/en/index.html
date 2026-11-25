@@ -32,6 +32,17 @@
   .hero p { text-wrap: balance; word-break: keep-all; overflow-wrap: anywhere; }
   .badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 20px; }
   .badge { padding: 4px 14px; border-radius: 999px; background: var(--ink); color: var(--bg); font-size: .9rem; font-weight: 700; }
+  .cta { margin: 22px 0 0; }
+  .cta a { display: inline-block; padding: 12px 28px; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 900; text-decoration: none; }
+  .notify { background: var(--card); border-radius: 16px; padding: 24px 20px; text-align: center; }
+  .notify p { margin: 0 0 14px; }
+  .notify form { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .notify form[hidden] { display: none; }
+  .notify input[type=email] { flex: 1 1 240px; max-width: 380px; min-width: 0; font: inherit; padding: 12px 16px; border: 2px solid var(--ink); border-radius: 999px; background: var(--bg); color: var(--ink); }
+  .notify button { font: inherit; font-weight: 900; padding: 12px 26px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; cursor: pointer; }
+  .notify button:disabled { opacity: .6; cursor: default; }
+  .notify .small { color: var(--muted); font-size: .85rem; margin: 14px 0 0; }
+  .notify .done { font-weight: 900; margin: 0; }
   main { max-width: 860px; margin: 0 auto; padding: 0 16px 48px; }
   h2 { font-size: 1.4rem; font-weight: 900; text-align: center; margin: 48px 0 16px; }
   h2::after { content: ""; display: block; width: 44px; height: 4px; background: var(--accent); margin: 8px auto 0; border-radius: 2px; }
@@ -65,6 +76,7 @@
   <p class="name">App Check for Android</p>
   <p class="lead">See at a glance which apps you don't remember installing, which you no longer use, and where you have several of the same kind.</p>
   <div class="badges"><span class="badge">Android 9+</span><span class="badge">Free (with ads)</span><span class="badge">Coming soon to Google Play</span></div>
+  <p class="cta"><a href="#notify">Get notified at launch</a></p>
 </section>
 
 <main>
@@ -86,6 +98,42 @@
     <div class="step"><img src="/shot-home.png" alt="A suggested home screen layout" width="540" height="1078" loading="lazy"><h3>Home screen ideas</h3><p>Get a suggestion for which apps go on the first page and how to group folders.</p></div>
   </div>
   <p class="caption">Screens are shown with sample apps. The app's interface is currently in Japanese.</p>
+
+  <h2 id="notify">Get notified at launch</h2>
+  <div class="notify">
+    <p>We'll send you one email when the app is released on Google Play.</p>
+    <form id="notify-form" action="FORM_ACTION_PENDING" method="post" target="_blank">
+      <input type="email" name="ENTRY_PENDING" required autocomplete="email" placeholder="Email address" aria-label="Email address">
+      <button type="submit">Notify me</button>
+    </form>
+    <p class="done" id="notify-done" hidden role="status">You're on the list. We'll email you at launch.</p>
+    <p class="small" id="notify-err" hidden role="alert" style="color:var(--bad-ink)">Could not send. Please check your connection and try again.</p>
+    <p class="small">Your email address is used only for the launch notification and deleted afterwards. See the <a href="/en/privacy">Privacy Policy</a>.</p>
+  </div>
+  <script>
+    // Google フォームへ直接送る（ページは移動しない）。スクリプトが使えない環境では、フォームがそのまま別タブで送信する
+    (function () {
+      var form = document.getElementById('notify-form');
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var button = form.querySelector('button'), label = button.textContent;
+        var err = document.getElementById('notify-err');
+        err.hidden = true;
+        button.disabled = true;
+        button.textContent = 'Sending…';
+        fetch(form.action, { method: 'POST', mode: 'no-cors', body: new URLSearchParams(new FormData(form)) })
+          .then(function () {
+            form.hidden = true;
+            document.getElementById('notify-done').hidden = false;
+          })
+          .catch(function () {
+            err.hidden = false;
+            button.disabled = false;
+            button.textContent = label;
+          });
+      });
+    })();
+  </script>
 
   <h2>What it does</h2>
   <div class="grid">
